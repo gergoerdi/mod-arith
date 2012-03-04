@@ -243,8 +243,6 @@ Mod₀ n = record
 Mod : ℕ → Set
 Mod n = Quotient (Mod₀ n)
 
-open Nat.SemiringSolver
-
 _+1 : ∀ {n} → Mod n → Mod n
 _+1 {n} = rec {A = Mod₀ n} (Mod n) (λ x → [ ℤsuc x ])
               (λ {x} {y} x∼y → [ subst (_∣_ n) (cong ∣_∣ (sym (lem x y))) x∼y ]-cong)

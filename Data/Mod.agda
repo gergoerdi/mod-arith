@@ -54,16 +54,16 @@ Mod₀ n = record
       neg-minus-pos zero (suc y) = cong (-[1+_] ∘ suc) (sym (proj₂ ℕ-CS.+-identity y))
       neg-minus-pos (suc x) (suc y) = cong (-[1+_] ∘ suc) (ℕ-CS.+-comm (suc x) y)
 
-      ∸-distrib : (p q n : ℕ) → p * n ∸ q * n ≡ (p ∸ q) * n
-      ∸-distrib zero zero n = refl
-      ∸-distrib zero (suc q) n = 0∸n≡0 (n ℕ+ q * n)
-      ∸-distrib (suc p) zero n = refl
-      ∸-distrib (suc p) (suc q) n =
+      ∸-*-distrib : {n : ℕ} → (p q : ℕ) → p * n ∸ q * n ≡ (p ∸ q) * n
+      ∸-*-distrib zero zero = refl
+      ∸-*-distrib {n} zero (suc q) = 0∸n≡0 (n ℕ+ q * n)
+      ∸-*-distrib (suc p) zero = refl
+      ∸-*-distrib {n} (suc p) (suc q) =
         begin
           (n ℕ+ p * n) ∸ (n ℕ+ q * n)
         ≡⟨ [i+j]∸[i+k]≡j∸k n (p * n) (q * n) ⟩
           p * n ∸ q * n
-        ≡⟨ ∸-distrib p q n ⟩
+        ≡⟨ ∸-*-distrib p q ⟩
           (p ∸ q) * n
         ∎
 
@@ -141,7 +141,7 @@ Mod₀ n = record
               y ∸ suc x
             ≡⟨ cong₂ _∸_ eq′ eq ⟩
               r * n ∸ q * n
-            ≡⟨ ∸-distrib r q n ⟩
+            ≡⟨ ∸-*-distrib r q ⟩
               (r ∸ q) * n
             ∎
 
@@ -158,7 +158,7 @@ Mod₀ n = record
               suc x ∸ y
             ≡⟨ cong₂ _∸_ eq eq′ ⟩
               q * n ∸ r * n
-            ≡⟨ ∸-distrib q r n ⟩
+            ≡⟨ ∸-*-distrib q r ⟩
               (q ∸ r) * n
             ∎
 

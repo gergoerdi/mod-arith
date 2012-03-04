@@ -97,7 +97,7 @@ Mod₀ n = record
         ≡⟨ abs-⊖-comm x y ⟩
           ∣ y ⊖ x ∣
         ≡⟨ cong ∣_∣ (sym (lem y x)) ⟩
-          ∣ (+ y)- (+ x) ∣
+          ∣ (+ y) - (+ x) ∣
         ∎
         where
         lem : (x y : ℕ) → (+ x) - (+ y) ≡ x ⊖ y
@@ -202,11 +202,11 @@ Mod₀ n = record
       telescope : (x y z : ℤ) → (x - y) + (y - z) ≡ x - z
       telescope x y z =
         begin
-          (x + (- y)) + (y + (- z))
-        ≡⟨ ℤ-CR.+-assoc x (- y) (y + - z) ⟩
-          x + ((- y) + (y + (- z)))
+          (x - y) + (y - z)
+        ≡⟨ ℤ-CR.+-assoc x (- y) (y - z) ⟩
+          x + ((- y) + (y - z))
         ≡⟨ cong (_+_ x) (sym (ℤ-CR.+-assoc (- y) y (- z))) ⟩
-          x + ((- y + y) + (- z))
+          x + ((- y + y) - z)
         ≡⟨ sym (ℤ-CR.+-assoc x (- y + y) (- z)) ⟩
           x + (- y + y) - z
         ≡⟨ cong (λ a → x + a - z) (inverse y) ⟩

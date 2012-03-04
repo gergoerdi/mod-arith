@@ -2,14 +2,38 @@ module Data.Mod where
 
 open import Data.Nat renaming (_+_ to _ℕ+_)
 open import Data.Nat.Properties
-open import Data.Integer hiding (_*_; _≤_) renaming (suc to ℤsuc)
+open import Data.Integer hiding (_*_; _≤_) renaming (suc to ℤsuc; pred to ℤpred)
 open import Data.Integer.Properties
 open import Data.Nat.Divisibility
 open import Quotient -- http://www.cs.nott.ac.uk/~txa/AIMXV/Quotient.html/Quotient.html
+open import Function using (_∘_)
 
 open import Relation.Binary
 open import Relation.Binary.PropositionalEquality hiding ( [_] )
 open ≡-Reasoning
+
+open import Algebra
+import Data.Nat.Properties as Nat
+private
+  module ℕ-CS = CommutativeSemiring Nat.commutativeSemiring
+import Data.Integer.Properties as Integer
+private
+  module ℤ-CR = CommutativeRing Integer.commutativeRing
+private
+  module ℕ-Ord = StrictTotalOrder Nat.strictTotalOrder
+open import Data.Product
+
+private
+  open import Relation.Binary.PropositionalEquality as PropEq
+    using (_≡_; refl; sym; cong; cong₂)
+  open PropEq.≡-Reasoning
+
+  neg-minus-pos : (x y : ℕ) → -[1+ x ] - (+ y) ≡ -[1+ (y ℕ+ x) ]
+  neg-minus-pos x zero = refl
+  neg-minus-pos zero (suc y) = cong (-[1+_] ∘ suc) (sym (proj₂ ℕ-CS.+-identity y))
+  neg-minus-pos (suc x) (suc y) = cong (-[1+_] ∘ suc) (ℕ-CS.+-comm (suc x) y)
+
+
 
 Mod₀ : ℕ → Setoid _ _
 Mod₀ n = record
@@ -26,33 +50,12 @@ Mod₀ n = record
     _∼_ : Rel ℤ _
     x ∼ y = n ∣ ∣ x - y ∣
 
-    open import Relation.Binary.PropositionalEquality as PropEq
-      using (_≡_; refl; sym; cong; cong₂)
-    open PropEq.≡-Reasoning
-
     private
-      open import Algebra
-      import Data.Nat.Properties as Nat
-      private
-        module ℕ-CS = CommutativeSemiring Nat.commutativeSemiring
-      import Data.Integer.Properties as Integer
-      private
-        module ℤ-CR = CommutativeRing Integer.commutativeRing
-      private
-        module ℕ-Ord = StrictTotalOrder Nat.strictTotalOrder
-      open import Data.Product
-      open import Function using (_∘_)
-
       abs-⊖-comm : (x y : ℕ) → ∣ x ⊖ y ∣ ≡ ∣ y ⊖ x ∣
       abs-⊖-comm zero zero = refl
       abs-⊖-comm zero (suc _) = refl
       abs-⊖-comm (suc _) zero = refl
       abs-⊖-comm (suc x) (suc y) = abs-⊖-comm x y
-
-      neg-minus-pos : (x y : ℕ) → -[1+ x ] - (+ y) ≡ -[1+ (y ℕ+ x) ]
-      neg-minus-pos x zero = refl
-      neg-minus-pos zero (suc y) = cong (-[1+_] ∘ suc) (sym (proj₂ ℕ-CS.+-identity y))
-      neg-minus-pos (suc x) (suc y) = cong (-[1+_] ∘ suc) (ℕ-CS.+-comm (suc x) y)
 
       ∸-*-distrib : {n : ℕ} → (p q : ℕ) → p * n ∸ q * n ≡ (p ∸ q) * n
       ∸-*-distrib zero zero = refl
@@ -239,3 +242,111 @@ Mod₀ n = record
 
 Mod : ℕ → Set
 Mod n = Quotient (Mod₀ n)
+
+open Nat.SemiringSolver
+
+_+1 : ∀ {n} → Mod n → Mod n
+_+1 {n} = rec {A = Mod₀ n} (Mod n) (λ x → [ ℤsuc x ])
+              (λ {x} {y} x∼y → [ subst (_∣_ n) (cong ∣_∣ (sym (lem x y))) x∼y ]-cong)
+  where
+  flip-suc : ∀ x y → x ℕ+ suc y ≡ suc x ℕ+ y
+  flip-suc zero y = refl
+  flip-suc (suc x) y = cong suc (flip-suc x y)
+
+  lem : (x y : ℤ) → ℤsuc x - ℤsuc y ≡ x - y
+  lem -[1+ zero ] -[1+ zero ] = refl
+  lem -[1+ zero ] -[1+ suc y ] = refl
+  lem -[1+ suc x ] -[1+ zero ] = refl
+  lem -[1+ suc x ] -[1+ suc y ] = refl
+  lem -[1+ zero ] (+ zero) = refl
+  lem -[1+ zero ] (+ suc y) = refl
+  lem -[1+ suc x ] (+ zero) = cong (-[1+_] ∘ suc) (proj₂ ℕ-CS.+-identity x)
+  lem -[1+ suc x ] (+ suc y) = cong (-[1+_] ∘ suc) (flip-suc x y)
+  lem (+ zero) -[1+ zero ] = refl
+  lem (+ zero) -[1+ suc y ] = refl
+  lem (+ suc x) -[1+ zero ] = cong (+_ ∘ suc) (sym (flip-suc x zero))
+  lem (+ suc x) -[1+ suc y ] = cong (+_ ∘ suc) (sym (flip-suc x (suc y)))
+  lem (+ zero) (+ zero) = refl
+  lem (+ zero) (+ suc y) = refl
+  lem (+ suc x) (+ zero) = cong (+_ ∘ suc) (sym (proj₂ ℕ-CS.+-identity x))
+  lem (+ suc x) (+ suc y) = refl
+
+_-1 : ∀ {n} → Mod n → Mod n
+_-1 {n} = rec {A = Mod₀ n} (Mod n) (λ x → [ ℤpred x ])
+              (λ {x} {y} x∼y → [ subst (_∣_ n) (cong ∣_∣ (sym (lem x y))) x∼y ]-cong)
+  where
+  suc-+-flip : ∀ x y → x ℕ+ suc y ≡ suc x ℕ+ y
+  suc-+-flip x y =
+    begin
+      x ℕ+ suc y
+    ≡⟨ ℕ-CS.+-comm x (suc y) ⟩
+      suc y ℕ+ x
+    ≡⟨ cong suc (ℕ-CS.+-comm y x) ⟩
+      suc x ℕ+ y
+    ∎
+
+  lem : (x y : ℤ) → ℤpred x - ℤpred y ≡ x - y
+  lem -[1+ zero ] -[1+ zero ] = refl
+  lem -[1+ zero ] -[1+ suc y ] = refl
+  lem -[1+ zero ] (+ zero) = refl
+  lem -[1+ x ] (+ suc y) =
+    begin
+      -[1+ suc x ] - (+ y)
+    ≡⟨ neg-minus-pos (suc x) y ⟩
+      -[1+ y ℕ+ suc x ]
+    ≡⟨ cong -[1+_] (ℕ-CS.+-comm y (suc x)) ⟩
+      -[1+ suc x ℕ+ y ]
+    ∎
+  lem -[1+ suc x ] -[1+ zero ] = refl
+  lem -[1+ suc x ] -[1+ suc y ] = refl
+  lem -[1+ suc x ] (+ zero) = refl
+  lem (+ zero) -[1+ zero ] = refl
+  lem (+ zero) -[1+ suc y ] = refl
+  lem (+ zero) (+ zero) = refl
+  lem (+ zero) (+ suc y) =
+    begin
+      -[1+ zero ] - (+ y)
+    ≡⟨ neg-minus-pos zero y ⟩
+      -[1+ (y ℕ+ zero) ]
+    ≡⟨ cong -[1+_] (ℕ-CS.+-comm y zero) ⟩
+      -[1+ y ]
+    ∎
+  lem (+ suc x) (+ suc y) =
+    begin
+      (+ x) - (+ y)
+    ≡⟨ -→⊖ x y ⟩
+      x ⊖ y
+    ∎
+    where
+    -→⊖ : ∀ x y → (+ x) - (+ y) ≡ x ⊖ y
+    -→⊖ zero zero = refl
+    -→⊖ zero (suc y) = refl
+    -→⊖ (suc x) zero = cong (+_ ∘ suc) (proj₂ ℕ-CS.+-identity x)
+    -→⊖ (suc x) (suc y) = refl
+
+  lem (+ suc x) -[1+ y ] = cong +_ (suc-+-flip x (suc y))
+  lem (+ suc x) (+ zero) = cong +_ (suc-+-flip x zero)
+
++1-1 : ∀ {n} → (x : Mod n) → x +1 -1 ≡ x
++1-1 {n} = elim {A = Mod₀ n} _ (λ x → [ proof x ]-cong) (λ x∼y → proof-irrelevance _ _)
+  where
+  proof : ∀ x → n ∣ ∣ ℤpred (ℤsuc x) - x ∣
+  proof x = divides 0 (cong ∣_∣ (lem x))
+    where
+    lem : ∀ {k} → ∀ x → -[1+ k ] + (+ (suc k) + x) - x ≡ + 0
+    lem {k} x =
+      begin
+        -[1+ k ] + (+ suc k + x) - x
+      ≡⟨ cong (λ a → a - x) (sym (ℤ-CR.+-assoc -[1+ k ] (+ suc k) x)) ⟩
+        (-[1+ k ] + (+ suc k)) + x - x
+      ≡⟨ cong (λ a → a + x - x) {k ⊖ k} refl ⟩
+        ((- (+ suc k)) + (+ suc k)) + x - x
+      ≡⟨ cong (λ a → a + x - x) (proj₁ ℤ-CR.-‿inverse -[1+ k ]) ⟩
+        + 0 + x - x
+      ≡⟨ cong (λ z → z - x) (proj₁ ℤ-CR.+-identity x) ⟩
+        x - x
+      ≡⟨ proj₂ ℤ-CR.-‿inverse x ⟩
+        + 0
+      ∎
+
+

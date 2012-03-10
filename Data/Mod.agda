@@ -244,7 +244,7 @@ Mod : ℕ → Set
 Mod n = Quotient (Mod₀ n)
 
 _+1 : ∀ {n} → Mod n → Mod n
-_+1 {n} = rec {A = Mod₀ n} (Mod n) (λ x → [ ℤsuc x ])
+_+1 {n} = rec (Mod n) (λ x → [ ℤsuc x ])
               (λ {x} {y} x∼y → [ subst (_∣_ n) (cong ∣_∣ (sym (lem x y))) x∼y ]-cong)
   where
   flip-suc : ∀ x y → x ℕ+ suc y ≡ suc x ℕ+ y
@@ -270,7 +270,7 @@ _+1 {n} = rec {A = Mod₀ n} (Mod n) (λ x → [ ℤsuc x ])
   lem (+ suc x) (+ suc y) = refl
 
 _-1 : ∀ {n} → Mod n → Mod n
-_-1 {n} = rec {A = Mod₀ n} (Mod n) (λ x → [ ℤpred x ])
+_-1 {n} = rec (Mod n) (λ x → [ ℤpred x ])
               (λ {x} {y} x∼y → [ subst (_∣_ n) (cong ∣_∣ (sym (lem x y))) x∼y ]-cong)
   where
   suc-+-flip : ∀ x y → x ℕ+ suc y ≡ suc x ℕ+ y
@@ -326,7 +326,7 @@ _-1 {n} = rec {A = Mod₀ n} (Mod n) (λ x → [ ℤpred x ])
   lem (+ suc x) (+ zero) = cong +_ (suc-+-flip x zero)
 
 +1-1 : ∀ {n} → (x : Mod n) → x +1 -1 ≡ x
-+1-1 {n} = elim {A = Mod₀ n} _ (λ x → [ proof x ]-cong) (λ x∼y → proof-irrelevance _ _)
++1-1 {n} = elim _ (λ x → [ proof x ]-cong) (λ x∼y → proof-irrelevance _ _)
   where
   proof : ∀ x → n ∣ ∣ ℤpred (ℤsuc x) - x ∣
   proof x = divides 0 (cong ∣_∣ (lem x))

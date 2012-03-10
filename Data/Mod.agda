@@ -273,10 +273,6 @@ Mod₀ n = record
 Mod : ℕ → Set
 Mod n = Quotient (Mod₀ n)
 
-plus₁ : ∀ {n} → ℤ → Mod n → Mod n
-plus₁ {n} x = rec (Mod n) (λ y → [ x + y ])
-                  (λ {y} {y′} y∼y′ → [ subst (_∣_ n) (cong ∣_∣ (sym (telescope- x y y′))) y∼y′ ]-cong)
-
 private
   open import Level using () renaming (zero to ℓ₀)
   postulate
@@ -285,6 +281,10 @@ private
 plus : ∀ {n} → Mod n → Mod n → Mod n
 plus {n} = rec (Mod n → Mod n) plus₁ (λ {x} {x′} x∼x′ → extensionality (lem x x′ x∼x′))
   where
+  plus₁ : ∀ {n} → ℤ → Mod n → Mod n
+  plus₁ {n} x = rec (Mod n) (λ y → [ x + y ])
+                    (λ {y} {y′} y∼y′ → [ subst (_∣_ n) (cong ∣_∣ (sym (telescope- x y y′))) y∼y′ ]-cong)
+
   lem : (x x′ : ℤ) → (x∼x′ : n ∣ ∣ x - x′ ∣) → ∀ y → plus₁ x y ≡ plus₁ x′ y
   lem x x′ x∼x′ = elim _ (λ y → [ proof y ]-cong) (λ x∼x′ → proof-irrelevance _ _)
     where

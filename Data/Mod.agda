@@ -6,7 +6,7 @@ open import Data.Integer hiding (_*_; _≤_) renaming (suc to ℤsuc; pred to �
 open import Data.Integer.Properties
 open import Data.Nat.Divisibility
 open import Quotient -- http://www.cs.nott.ac.uk/~txa/AIMXV/Quotient.html/Quotient.html
-open import Function using (_∘_)
+open import Function using (_∘_; const)
 
 open import Relation.Binary
 open import Relation.Binary.PropositionalEquality hiding ( [_] )
@@ -33,7 +33,59 @@ private
   neg-minus-pos zero (suc y) = cong (-[1+_] ∘ suc) (sym (proj₂ ℕ-CS.+-identity y))
   neg-minus-pos (suc x) (suc y) = cong (-[1+_] ∘ suc) (ℕ-CS.+-comm (suc x) y)
 
+  flip-suc : ∀ x y → x ℕ+ suc y ≡ suc x ℕ+ y
+  flip-suc zero y = refl
+  flip-suc (suc x) y = cong suc (flip-suc x y)
 
+  telescope+ : (x y z : ℤ) → (x - y) + (y - z) ≡ x - z
+  telescope+ x y z =
+    begin
+      (x - y) + (y - z)
+    ≡⟨ ℤ-CR.+-assoc x (- y) (y - z) ⟩
+      x + ((- y) + (y - z))
+    ≡⟨ cong (_+_ x) (sym (ℤ-CR.+-assoc (- y) y (- z))) ⟩
+      x + ((- y + y) - z)
+    ≡⟨ sym (ℤ-CR.+-assoc x (- y + y) (- z)) ⟩
+      x + (- y + y) - z
+    ≡⟨ cong (λ a → x + a - z) (proj₁ ℤ-CR.-‿inverse y) ⟩
+      x + (+ 0) - z
+    ≡⟨ cong (λ a → a - z) (proj₂ ℤ-CR.+-identity x) ⟩
+      x - z
+    ∎
+
+  telescope- : (x y z : ℤ) → (x + y) - (x + z) ≡ y - z
+  telescope- x y z =
+    begin
+      (x + y) - (x + z)
+    ≡⟨ cong (λ a → a - (x + z)) (ℤ-CR.+-comm x y) ⟩
+      (y + x) - (x + z)
+    ≡⟨ ℤ-CR.+-assoc y x (- (x + z)) ⟩
+      y + (x - (x + z))
+    ≡⟨ cong (λ a → y + (x + a)) (lem x z) ⟩
+      y + (x + (- x - z))
+    ≡⟨ cong (λ a → y + a) (sym (ℤ-CR.+-assoc x (- x) (- z))) ⟩
+      y + (x - x - z)
+    ≡⟨ cong (λ a → y + (a - z)) (proj₂ ℤ-CR.-‿inverse x) ⟩
+      y + (+ 0 - z)
+    ≡⟨ cong (λ a → y + a) (proj₁ ℤ-CR.+-identity (- z)) ⟩
+      y - z
+    ∎
+    where
+    flip-⊖ : (x y : ℕ) → x ⊖ y ≡ - (y ⊖ x)
+    flip-⊖ zero     zero    = refl
+    flip-⊖ zero     (suc y) = refl
+    flip-⊖ (suc x)  zero    = refl
+    flip-⊖ (suc x)  (suc y) = flip-⊖ x y
+
+    lem : (x y : ℤ) → - (x + y) ≡ - x - y
+    lem -[1+ x ] -[1+ y ] = cong (+_ ∘ suc) (sym (flip-suc x y))
+    lem -[1+ x ] (+ zero) = cong (+_ ∘ suc) (sym (proj₂ ℕ-CS.+-identity x))
+    lem -[1+ x ] (+ suc y) = sym (flip-⊖ x y)
+    lem (+ zero) -[1+ y ] = refl
+    lem (+ suc x) -[1+ y ] = sym (flip-⊖ y x)
+    lem (+ zero) (+ y) = sym (proj₁ ℤ-CR.+-identity (- (+ y)))
+    lem (+ suc x) (+ zero) = cong -[1+_] (proj₂ ℕ-CS.+-identity x)
+    lem (+ suc x) (+ suc y) = cong -[1+_] (flip-suc x y)
 
 Mod₀ : ℕ → Setoid _ _
 Mod₀ n = record
@@ -202,28 +254,6 @@ Mod₀ n = record
       ∣-abs-+ {n} -[1+ x ] (+ y) d d′ = div-diff d d′
       ∣-abs-+ {n} (+ x) -[1+ y ] d d′ = div-diff d′ d
 
-      telescope : (x y z : ℤ) → (x - y) + (y - z) ≡ x - z
-      telescope x y z =
-        begin
-          (x - y) + (y - z)
-        ≡⟨ ℤ-CR.+-assoc x (- y) (y - z) ⟩
-          x + ((- y) + (y - z))
-        ≡⟨ cong (_+_ x) (sym (ℤ-CR.+-assoc (- y) y (- z))) ⟩
-          x + ((- y + y) - z)
-        ≡⟨ sym (ℤ-CR.+-assoc x (- y + y) (- z)) ⟩
-          x + (- y + y) - z
-        ≡⟨ cong (λ a → x + a - z) (inverse y) ⟩
-          x + (+ 0) - z
-        ≡⟨ cong (λ a → a - z) (proj₂ ℤ-CR.+-identity x) ⟩
-          x - z
-        ∎
-        where
-          inverse : (a : ℤ) → - a + a ≡ + 0
-          inverse -[1+ zero ] = refl
-          inverse -[1+ suc a ] = n⊖n≡0 a
-          inverse (+ zero) = refl
-          inverse (+ suc a) = n⊖n≡0 a
-
     reflexive : Reflexive _∼_
     reflexive {x} = divides zero (lem x)
       where
@@ -236,21 +266,43 @@ Mod₀ n = record
     symmetric {x} {y} (divides q eq) = divides q (trans (abs-flip y x) eq)
 
     transitive : Transitive _∼_
-    transitive {x} {y} {z} d d′ = subst (_∣_ n) (cong ∣_∣ (telescope x y z)) (∣-abs-+ (x - y) (y - z) d d′)
+    transitive {x} {y} {z} d d′ = subst (_∣_ n) (cong ∣_∣ (telescope+ x y z)) (∣-abs-+ (x - y) (y - z) d d′)
 
 
 
 Mod : ℕ → Set
 Mod n = Quotient (Mod₀ n)
 
+plus₁ : ∀ {n} → ℤ → Mod n → Mod n
+plus₁ {n} x = rec (Mod n) (λ y → [ x + y ])
+                  (λ {y} {y′} y∼y′ → [ subst (_∣_ n) (cong ∣_∣ (sym (telescope- x y y′))) y∼y′ ]-cong)
+
+plus : ∀ {n} → Mod n → Mod n → Mod n
+plus {n} = rec (Mod n → Mod n) plus₁ (λ {x} {x′} x∼x′ → extensionality (plus₁ x) (plus₁ x′) (lem x x′ x∼x′))
+  where
+  extensionality : {A B : Set} → (f g : A → B) → (∀ x → f x ≡ g x) → f ≡ g
+  extensionality = {!!}
+
+  lem : (x x′ : ℤ) → (x∼x′ : n ∣ ∣ x - x′ ∣) → (y : Mod n) → plus₁ x y ≡ plus₁ x′ y
+  lem x x′ x∼x′ = elim _ (λ y → [ proof y ]-cong) (λ x∼x′ → proof-irrelevance _ _)
+    where
+    eq : (y : ℤ) → (x + y) - (x′ + y) ≡ x - x′
+    eq y =
+      begin
+        (x + y) - (x′ + y)
+      ≡⟨ cong₂ _-_ (ℤ-CR.+-comm x y) (ℤ-CR.+-comm x′ y) ⟩
+        (y + x) - (y + x′)
+      ≡⟨ telescope- y x x′ ⟩
+        x - x′
+      ∎
+
+    proof : (y : ℤ) → n ∣ ∣ (x + y) - (x′ + y) ∣
+    proof y = subst (_∣_ n) (cong ∣_∣ (sym (eq y))) x∼x′
+
 _+1 : ∀ {n} → Mod n → Mod n
 _+1 {n} = rec (Mod n) (λ x → [ ℤsuc x ])
               (λ {x} {y} x∼y → [ subst (_∣_ n) (cong ∣_∣ (sym (lem x y))) x∼y ]-cong)
   where
-  flip-suc : ∀ x y → x ℕ+ suc y ≡ suc x ℕ+ y
-  flip-suc zero y = refl
-  flip-suc (suc x) y = cong suc (flip-suc x y)
-
   lem : (x y : ℤ) → ℤsuc x - ℤsuc y ≡ x - y
   lem -[1+ zero ] -[1+ zero ] = refl
   lem -[1+ zero ] -[1+ suc y ] = refl

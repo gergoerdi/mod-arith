@@ -37,6 +37,12 @@ private
   flip-suc zero y = refl
   flip-suc (suc x) y = cong suc (flip-suc x y)
 
+  flip-⊖ : (x y : ℕ) → x ⊖ y ≡ - (y ⊖ x)
+  flip-⊖ zero     zero    = refl
+  flip-⊖ zero     (suc y) = refl
+  flip-⊖ (suc x)  zero    = refl
+  flip-⊖ (suc x)  (suc y) = flip-⊖ x y
+
   telescope+ : (x y z : ℤ) → (x - y) + (y - z) ≡ x - z
   telescope+ x y z =
     begin
@@ -71,12 +77,6 @@ private
       y - z
     ∎
     where
-    flip-⊖ : (x y : ℕ) → x ⊖ y ≡ - (y ⊖ x)
-    flip-⊖ zero     zero    = refl
-    flip-⊖ zero     (suc y) = refl
-    flip-⊖ (suc x)  zero    = refl
-    flip-⊖ (suc x)  (suc y) = flip-⊖ x y
-
     lem : (x y : ℤ) → - (x + y) ≡ - x - y
     lem -[1+ x ] -[1+ y ] = cong (+_ ∘ suc) (sym (flip-suc x y))
     lem -[1+ x ] (+ zero) = cong (+_ ∘ suc) (sym (proj₂ ℕ-CS.+-identity x))
@@ -86,6 +86,157 @@ private
     lem (+ zero) (+ y) = sym (proj₁ ℤ-CR.+-identity (- (+ y)))
     lem (+ suc x) (+ zero) = cong -[1+_] (proj₂ ℕ-CS.+-identity x)
     lem (+ suc x) (+ suc y) = cong -[1+_] (flip-suc x y)
+
+  abs-⊖-comm : (x y : ℕ) → ∣ x ⊖ y ∣ ≡ ∣ y ⊖ x ∣
+  abs-⊖-comm zero zero = refl
+  abs-⊖-comm zero (suc _) = refl
+  abs-⊖-comm (suc _) zero = refl
+  abs-⊖-comm (suc x) (suc y) = abs-⊖-comm x y
+
+  ∸-*-distrib : {n : ℕ} → (p q : ℕ) → p * n ∸ q * n ≡ (p ∸ q) * n
+  ∸-*-distrib zero zero = refl
+  ∸-*-distrib {n} zero (suc q) = 0∸n≡0 (n ℕ+ q * n)
+  ∸-*-distrib (suc p) zero = refl
+  ∸-*-distrib {n} (suc p) (suc q) =
+    begin
+      (n ℕ+ p * n) ∸ (n ℕ+ q * n)
+    ≡⟨ [i+j]∸[i+k]≡j∸k n (p * n) (q * n) ⟩
+      p * n ∸ q * n
+    ≡⟨ ∸-*-distrib p q ⟩
+      (p ∸ q) * n
+    ∎
+
+  abs-flip : (x y : ℤ) → ∣ x - y ∣ ≡ ∣ y - x ∣
+  abs-flip -[1+ x ] -[1+ y ] = abs-⊖-comm y x
+  abs-flip -[1+ x ] (+ y) =
+    begin
+      ∣ -[1+ x ] - (+ y) ∣
+    ≡⟨ cong ∣_∣ (neg-minus-pos x y) ⟩
+      suc (y ℕ+ x)
+    ≡⟨ cong suc (ℕ-CS.+-comm y x)⟩
+      suc (x ℕ+ y)
+    ≡⟨ ℕ-CS.+-comm (suc x) y ⟩
+      y ℕ+ suc x
+    ∎
+  abs-flip (+ x) -[1+ y ] =
+    begin
+      x ℕ+ suc y
+    ≡⟨ ℕ-CS.+-comm x (suc y) ⟩
+      suc (y ℕ+ x)
+    ≡⟨ cong suc (ℕ-CS.+-comm y x) ⟩
+      suc (x ℕ+ y)
+    ≡⟨ cong ∣_∣ (sym (neg-minus-pos y x)) ⟩
+      ∣ -[1+ y ] + - (+ x) ∣
+    ∎
+  abs-flip (+ x) (+ y) =
+    begin
+      ∣ (+ x) - (+ y) ∣
+    ≡⟨ cong ∣_∣ (lem x y) ⟩
+      ∣ x ⊖ y ∣
+    ≡⟨ abs-⊖-comm x y ⟩
+      ∣ y ⊖ x ∣
+    ≡⟨ cong ∣_∣ (sym (lem y x)) ⟩
+      ∣ (+ y) - (+ x) ∣
+    ∎
+    where
+    lem : (x y : ℕ) → (+ x) - (+ y) ≡ x ⊖ y
+    lem zero zero = refl
+    lem zero (suc y) = refl
+    lem (suc x) zero = cong (+_ ∘ suc) (proj₂ ℕ-CS.+-identity x)
+    lem (suc x) (suc y) = refl
+
+  diff-x<y : ∀ {x y} (x<y : x < y) → y ⊖ suc x ≡ + (y ∸ suc x)
+  diff-x<y (s≤s z≤n) = refl
+  diff-x<y (s≤s (s≤s y≤n)) = diff-x<y (s≤s y≤n)
+
+  diff-x≥y : ∀ {x y} (x≥y : x ≥ y) → y ⊖ suc x ≡ -[1+ (x ∸ y) ]
+  diff-x≥y z≤n = refl
+  diff-x≥y (s≤s m≤n) = diff-x≥y m≤n
+
+  >-weaken : ∀ {n m} → n > m → n ≥ m
+  >-weaken (s≤s z≤n) = z≤n
+  >-weaken (s≤s (s≤s m≤n)) = s≤s (>-weaken (s≤s m≤n))
+
+  ≡-weaken : ∀ {n m} → n ≡ m → n ≥ m
+  ≡-weaken {zero} refl = z≤n
+  ≡-weaken {suc n} refl = s≤s (≡-weaken refl)
+
+  suc-∸ : ∀ {x y} (y≤x : y ≤ x) → suc (x ∸ y) ≡ suc x ∸ y
+  suc-∸ {x} {zero} z≤n = refl
+  suc-∸ {suc x} {suc y} (s≤s y≤x) = suc-∸ y≤x
+  suc-∸ {zero} {suc y} ()
+
+  div-diff : ∀ {n : ℕ} → {x y : ℕ} → n ∣ suc x → n ∣ y → n ∣ ∣ y ⊖ suc x ∣
+  div-diff {n} {x} {y} (divides q eq) (divides r eq′) = dispatch
+    where
+    lem-x<y : (x<y : x < y) → n ∣ ∣ y ⊖ suc x ∣
+    lem-x<y x<y = divides (r ∸ q) eq″
+      where
+      eq″ : ∣ y ⊖ suc x ∣ ≡ (r ∸ q) * n
+      eq″ =
+        begin
+          ∣ y ⊖ suc x ∣
+        ≡⟨ cong ∣_∣ (diff-x<y x<y) ⟩
+          y ∸ suc x
+        ≡⟨ cong₂ _∸_ eq′ eq ⟩
+          r * n ∸ q * n
+        ≡⟨ ∸-*-distrib r q ⟩
+          (r ∸ q) * n
+        ∎
+
+    lem-x≥y : (x≥y : x ≥ y) → n ∣ ∣ y ⊖ suc x ∣
+    lem-x≥y x≥y = divides (q ∸ r) eq″
+      where
+      eq″ : ∣ y ⊖ suc x ∣ ≡ (q ∸ r) * n
+      eq″ =
+        begin
+          ∣ y ⊖ suc x ∣
+        ≡⟨ cong ∣_∣ (diff-x≥y x≥y) ⟩
+          suc (x ∸ y)
+        ≡⟨ suc-∸ x≥y ⟩
+          suc x ∸ y
+        ≡⟨ cong₂ _∸_ eq eq′ ⟩
+          q * n ∸ r * n
+        ≡⟨ ∸-*-distrib q r ⟩
+          (q ∸ r) * n
+        ∎
+
+    dispatch : n ∣ ∣ y ⊖ suc x ∣
+    dispatch with ℕ-Ord.compare x y
+    dispatch | tri< x<y  _    _    = lem-x<y x<y
+    dispatch | tri≈ _    x≡y  _    = lem-x≥y (≡-weaken x≡y)
+    dispatch | tri> _    _    x>y  = lem-x≥y (>-weaken x>y)
+
+
+  ∣-abs-+ : ∀ {n : ℕ} → (x y : ℤ) → n ∣ ∣ x ∣ → n ∣ ∣ y ∣ → n ∣ ∣ x + y ∣
+  ∣-abs-+ {n} (+ x) (+ y) (divides q eq) (divides r eq′) = divides (q ℕ+ r) lem
+    where
+    lem : x ℕ+ y ≡ (q ℕ+ r) * n
+    lem =
+      begin
+        x ℕ+ y
+      ≡⟨ cong₂ _ℕ+_ eq eq′ ⟩
+        q * n ℕ+ r * n
+      ≡⟨ sym (proj₂ ℕ-CS.distrib n q r) ⟩
+        (q ℕ+ r) * n
+      ∎
+  ∣-abs-+ {n} -[1+ x ] -[1+ y ] (divides q eq) (divides r eq′) = divides (q ℕ+ r) lem
+    where
+    lem : suc (suc (x ℕ+ y)) ≡ (q ℕ+ r) * n
+    lem =
+      begin
+        suc ((suc x) ℕ+ y)
+      ≡⟨ cong suc (ℕ-CS.+-comm (suc x) y) ⟩
+        suc y ℕ+ suc x
+      ≡⟨ ℕ-CS.+-comm (suc y) (suc x) ⟩
+        suc x ℕ+ suc y
+      ≡⟨ cong₂ _ℕ+_ eq eq′ ⟩
+        q * n ℕ+ r * n
+      ≡⟨ sym (proj₂ ℕ-CS.distrib n q r) ⟩
+        (q ℕ+ r) * n
+      ∎
+  ∣-abs-+ {n} -[1+ x ] (+ y) d d′ = div-diff d d′
+  ∣-abs-+ {n} (+ x) -[1+ y ] d d′ = div-diff d′ d
 
 Mod₀ : ℕ → Setoid _ _
 Mod₀ n = record
@@ -101,158 +252,6 @@ Mod₀ n = record
   where
     _∼_ : Rel ℤ _
     x ∼ y = n ∣ ∣ x - y ∣
-
-    private
-      abs-⊖-comm : (x y : ℕ) → ∣ x ⊖ y ∣ ≡ ∣ y ⊖ x ∣
-      abs-⊖-comm zero zero = refl
-      abs-⊖-comm zero (suc _) = refl
-      abs-⊖-comm (suc _) zero = refl
-      abs-⊖-comm (suc x) (suc y) = abs-⊖-comm x y
-
-      ∸-*-distrib : {n : ℕ} → (p q : ℕ) → p * n ∸ q * n ≡ (p ∸ q) * n
-      ∸-*-distrib zero zero = refl
-      ∸-*-distrib {n} zero (suc q) = 0∸n≡0 (n ℕ+ q * n)
-      ∸-*-distrib (suc p) zero = refl
-      ∸-*-distrib {n} (suc p) (suc q) =
-        begin
-          (n ℕ+ p * n) ∸ (n ℕ+ q * n)
-        ≡⟨ [i+j]∸[i+k]≡j∸k n (p * n) (q * n) ⟩
-          p * n ∸ q * n
-        ≡⟨ ∸-*-distrib p q ⟩
-          (p ∸ q) * n
-        ∎
-
-      abs-flip : (x y : ℤ) → ∣ x - y ∣ ≡ ∣ y - x ∣
-      abs-flip -[1+ x ] -[1+ y ] = abs-⊖-comm y x
-      abs-flip -[1+ x ] (+ y) =
-        begin
-          ∣ -[1+ x ] - (+ y) ∣
-        ≡⟨ cong ∣_∣ (neg-minus-pos x y) ⟩
-          suc (y ℕ+ x)
-        ≡⟨ cong suc (ℕ-CS.+-comm y x)⟩
-          suc (x ℕ+ y)
-        ≡⟨ ℕ-CS.+-comm (suc x) y ⟩
-          y ℕ+ suc x
-        ∎
-      abs-flip (+ x) -[1+ y ] =
-        begin
-          x ℕ+ suc y
-        ≡⟨ ℕ-CS.+-comm x (suc y) ⟩
-          suc (y ℕ+ x)
-        ≡⟨ cong suc (ℕ-CS.+-comm y x) ⟩
-          suc (x ℕ+ y)
-        ≡⟨ cong ∣_∣ (sym (neg-minus-pos y x)) ⟩
-          ∣ -[1+ y ] + - (+ x) ∣
-        ∎
-      abs-flip (+ x) (+ y) =
-        begin
-          ∣ (+ x) - (+ y) ∣
-        ≡⟨ cong ∣_∣ (lem x y) ⟩
-          ∣ x ⊖ y ∣
-        ≡⟨ abs-⊖-comm x y ⟩
-          ∣ y ⊖ x ∣
-        ≡⟨ cong ∣_∣ (sym (lem y x)) ⟩
-          ∣ (+ y) - (+ x) ∣
-        ∎
-        where
-        lem : (x y : ℕ) → (+ x) - (+ y) ≡ x ⊖ y
-        lem zero zero = refl
-        lem zero (suc y) = refl
-        lem (suc x) zero = cong (+_ ∘ suc) (proj₂ ℕ-CS.+-identity x)
-        lem (suc x) (suc y) = refl
-
-      diff-x<y : ∀ {x y} (x<y : x < y) → y ⊖ suc x ≡ + (y ∸ suc x)
-      diff-x<y (s≤s z≤n) = refl
-      diff-x<y (s≤s (s≤s y≤n)) = diff-x<y (s≤s y≤n)
-
-      diff-x≥y : ∀ {x y} (x≥y : x ≥ y) → y ⊖ suc x ≡ -[1+ (x ∸ y) ]
-      diff-x≥y z≤n = refl
-      diff-x≥y (s≤s m≤n) = diff-x≥y m≤n
-
-      >-weaken : ∀ {n m} → n > m → n ≥ m
-      >-weaken (s≤s z≤n) = z≤n
-      >-weaken (s≤s (s≤s m≤n)) = s≤s (>-weaken (s≤s m≤n))
-
-      ≡-weaken : ∀ {n m} → n ≡ m → n ≥ m
-      ≡-weaken {zero} refl = z≤n
-      ≡-weaken {suc n} refl = s≤s (≡-weaken refl)
-
-      suc-∸ : ∀ {x y} (y≤x : y ≤ x) → suc (x ∸ y) ≡ suc x ∸ y
-      suc-∸ {x} {zero} z≤n = refl
-      suc-∸ {suc x} {suc y} (s≤s y≤x) = suc-∸ y≤x
-      suc-∸ {zero} {suc y} ()
-
-      div-diff : ∀ {n : ℕ} → {x y : ℕ} → n ∣ suc x → n ∣ y → n ∣ ∣ y ⊖ suc x ∣
-      div-diff {n} {x} {y} (divides q eq) (divides r eq′) = dispatch
-        where
-        lem-x<y : (x<y : x < y) → n ∣ ∣ y ⊖ suc x ∣
-        lem-x<y x<y = divides (r ∸ q) eq″
-          where
-          eq″ : ∣ y ⊖ suc x ∣ ≡ (r ∸ q) * n
-          eq″ =
-            begin
-              ∣ y ⊖ suc x ∣
-            ≡⟨ cong ∣_∣ (diff-x<y x<y) ⟩
-              y ∸ suc x
-            ≡⟨ cong₂ _∸_ eq′ eq ⟩
-              r * n ∸ q * n
-            ≡⟨ ∸-*-distrib r q ⟩
-              (r ∸ q) * n
-            ∎
-
-        lem-x≥y : (x≥y : x ≥ y) → n ∣ ∣ y ⊖ suc x ∣
-        lem-x≥y x≥y = divides (q ∸ r) eq″
-          where
-          eq″ : ∣ y ⊖ suc x ∣ ≡ (q ∸ r) * n
-          eq″ =
-            begin
-              ∣ y ⊖ suc x ∣
-            ≡⟨ cong ∣_∣ (diff-x≥y x≥y) ⟩
-              suc (x ∸ y)
-            ≡⟨ suc-∸ x≥y ⟩
-              suc x ∸ y
-            ≡⟨ cong₂ _∸_ eq eq′ ⟩
-              q * n ∸ r * n
-            ≡⟨ ∸-*-distrib q r ⟩
-              (q ∸ r) * n
-            ∎
-
-        dispatch : n ∣ ∣ y ⊖ suc x ∣
-        dispatch with ℕ-Ord.compare x y
-        dispatch | tri< x<y  _    _    = lem-x<y x<y
-        dispatch | tri≈ _    x≡y  _    = lem-x≥y (≡-weaken x≡y)
-        dispatch | tri> _    _    x>y  = lem-x≥y (>-weaken x>y)
-
-
-      ∣-abs-+ : ∀ {n : ℕ} → (x y : ℤ) → n ∣ ∣ x ∣ → n ∣ ∣ y ∣ → n ∣ ∣ x + y ∣
-      ∣-abs-+ {n} (+ x) (+ y) (divides q eq) (divides r eq′) = divides (q ℕ+ r) lem
-        where
-        lem : x ℕ+ y ≡ (q ℕ+ r) * n
-        lem =
-          begin
-            x ℕ+ y
-          ≡⟨ cong₂ _ℕ+_ eq eq′ ⟩
-            q * n ℕ+ r * n
-          ≡⟨ sym (proj₂ ℕ-CS.distrib n q r) ⟩
-            (q ℕ+ r) * n
-          ∎
-      ∣-abs-+ {n} -[1+ x ] -[1+ y ] (divides q eq) (divides r eq′) = divides (q ℕ+ r) lem
-        where
-        lem : suc (suc (x ℕ+ y)) ≡ (q ℕ+ r) * n
-        lem =
-          begin
-            suc ((suc x) ℕ+ y)
-          ≡⟨ cong suc (ℕ-CS.+-comm (suc x) y) ⟩
-            suc y ℕ+ suc x
-          ≡⟨ ℕ-CS.+-comm (suc y) (suc x) ⟩
-            suc x ℕ+ suc y
-          ≡⟨ cong₂ _ℕ+_ eq eq′ ⟩
-            q * n ℕ+ r * n
-          ≡⟨ sym (proj₂ ℕ-CS.distrib n q r) ⟩
-            (q ℕ+ r) * n
-          ∎
-      ∣-abs-+ {n} -[1+ x ] (+ y) d d′ = div-diff d d′
-      ∣-abs-+ {n} (+ x) -[1+ y ] d d′ = div-diff d′ d
 
     reflexive : Reflexive _∼_
     reflexive {x} = divides zero (lem x)
@@ -278,11 +277,58 @@ private
   postulate
     extensionality : Extensionality ℓ₀ ℓ₀
 
+open import Quotient.Product
+
+plus' : ∀ {n} → Mod n → Mod n → Mod n
+plus' = curry-quot plus₀
+  where
+  plus₀ : ∀ {n} → Mod₀ n ×-quot Mod₀ n → Mod n
+  plus₀ {n} = rec _ ([_] ∘ uncurry _+_ ) (λ {xt} {yu} eq → [ well-defined {xt} {yu} eq ]-cong)
+    where
+    proof : ∀ {x t y u} → (n ∣ ∣ x - y ∣) → (n ∣ ∣ t - u ∣) → n ∣ ∣ (x + t) - (y + u) ∣
+    proof {x} {t} {y} {u} x∼y t∼u = subst ((_∣_ n) ∘ ∣_∣) (sym (eq x y t u)) (∣-abs-+ (x - y) (t - u) x∼y t∼u)
+      where
+      eq : ∀ a b c d → (a + c) - (b + d) ≡ (a - b) + (c - d)
+      eq a b c d =
+        begin
+          (a + c) - (b + d)
+        ≡⟨ cong (_-_ (a + c)) (ℤ-CR.+-comm b d) ⟩
+          (a + c) - (d + b)
+        ≡⟨ ℤ-CR.+-assoc a c (- (d + b)) ⟩
+          a + (c - (d + b))
+        ≡⟨ cong (_+_ a ∘ _+_ c) (lem d b) ⟩
+          a + (c + (- d + - b))
+        ≡⟨ cong (_+_ a) (sym (ℤ-CR.+-assoc c (- d) (- b))) ⟩
+          a + ((c - d) - b)
+        ≡⟨ sym (ℤ-CR.+-assoc a (c - d) (- b)) ⟩
+          (a + (c - d)) - b
+        ≡⟨ cong (λ x → x - b) (ℤ-CR.+-comm a (c - d)) ⟩
+          ((c - d) + a) - b
+        ≡⟨ ℤ-CR.+-assoc (c - d) a (- b) ⟩
+          (c - d) + (a - b)
+        ≡⟨ ℤ-CR.+-comm (c - d) (a - b) ⟩
+          (a - b) + (c - d)
+        ∎
+        where
+        lem : ∀ x y → - (x + y) ≡ (- x) + (- y)
+        lem -[1+ x ] -[1+ y ] = cong (+_ ∘ suc) (sym (flip-suc x y))
+        lem -[1+ x ] (+ zero) = cong (+_ ∘ suc) (sym (proj₂ ℕ-CS.+-identity x))
+        lem -[1+ x ] (+ (suc y)) = sym (flip-⊖ x y)
+        lem (+ zero) -[1+ y ] = refl
+        lem (+ suc x) -[1+ y ] = sym (flip-⊖ y x)
+        lem (+ zero) (+ y) = sym (proj₁ ℤ-CR.+-identity (- (+ y)))
+        lem (+ suc x) (+ zero) = cong -[1+_] (proj₂ ℕ-CS.+-identity x)
+        lem (+ suc x) (+ suc y) = cong -[1+_] (flip-suc x y)
+
+    well-defined : ∀ {xt yu} → (n ∣ ∣ proj₁ xt - proj₁ yu ∣) × (n ∣ ∣ proj₂ xt - proj₂ yu ∣)
+                 → n ∣ ∣(uncurry _+_ xt) - (uncurry _+_ yu)∣
+    well-defined {x , t} {y , u} (x∼y , t∼u) = proof {x} {t} {y} {u} x∼y t∼u
+
 plus : ∀ {n} → Mod n → Mod n → Mod n
-plus {n} = rec (Mod n → Mod n) plus₁ (λ {x} {x′} x∼x′ → extensionality (lem x x′ x∼x′))
+plus {n} = rec _ plus₁ (λ {x} {x′} x∼x′ → extensionality (lem x x′ x∼x′))
   where
   plus₁ : ∀ {n} → ℤ → Mod n → Mod n
-  plus₁ {n} x = rec (Mod n) (λ y → [ x + y ])
+  plus₁ {n} x = rec _ (λ y → [ x + y ])
                     (λ {y} {y′} y∼y′ → [ subst (_∣_ n) (cong ∣_∣ (sym (telescope- x y y′))) y∼y′ ]-cong)
 
   lem : (x x′ : ℤ) → (x∼x′ : n ∣ ∣ x - x′ ∣) → ∀ y → plus₁ x y ≡ plus₁ x′ y

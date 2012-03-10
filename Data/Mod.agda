@@ -278,13 +278,14 @@ plus₁ {n} x = rec (Mod n) (λ y → [ x + y ])
                   (λ {y} {y′} y∼y′ → [ subst (_∣_ n) (cong ∣_∣ (sym (telescope- x y y′))) y∼y′ ]-cong)
 
 private
+  open import Level using () renaming (zero to ℓ₀)
   postulate
-    extensionality : {A B : Set} → (f g : A → B) → (∀ x → f x ≡ g x) → f ≡ g
+    extensionality : Extensionality ℓ₀ ℓ₀
 
 plus : ∀ {n} → Mod n → Mod n → Mod n
-plus {n} = rec (Mod n → Mod n) plus₁ (λ {x} {x′} x∼x′ → extensionality (plus₁ x) (plus₁ x′) (lem x x′ x∼x′))
+plus {n} = rec (Mod n → Mod n) plus₁ (λ {x} {x′} x∼x′ → extensionality (lem x x′ x∼x′))
   where
-  lem : (x x′ : ℤ) → (x∼x′ : n ∣ ∣ x - x′ ∣) → (y : Mod n) → plus₁ x y ≡ plus₁ x′ y
+  lem : (x x′ : ℤ) → (x∼x′ : n ∣ ∣ x - x′ ∣) → ∀ y → plus₁ x y ≡ plus₁ x′ y
   lem x x′ x∼x′ = elim _ (λ y → [ proof y ]-cong) (λ x∼x′ → proof-irrelevance _ _)
     where
     eq : (y : ℤ) → (x + y) - (x′ + y) ≡ x - x′

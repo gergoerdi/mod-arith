@@ -9,7 +9,7 @@ open import Quotient -- http://www.cs.nott.ac.uk/~txa/AIMXV/Quotient.html/Quotie
 open import Function using (_∘_; const)
 
 open import Relation.Binary
-open import Relation.Binary.PropositionalEquality hiding ( [_] )
+open import Relation.Binary.PropositionalEquality hiding ([_])
 open ≡-Reasoning
 
 open import Algebra
@@ -277,12 +277,13 @@ plus₁ : ∀ {n} → ℤ → Mod n → Mod n
 plus₁ {n} x = rec (Mod n) (λ y → [ x + y ])
                   (λ {y} {y′} y∼y′ → [ subst (_∣_ n) (cong ∣_∣ (sym (telescope- x y y′))) y∼y′ ]-cong)
 
+private
+  postulate
+    extensionality : {A B : Set} → (f g : A → B) → (∀ x → f x ≡ g x) → f ≡ g
+
 plus : ∀ {n} → Mod n → Mod n → Mod n
 plus {n} = rec (Mod n → Mod n) plus₁ (λ {x} {x′} x∼x′ → extensionality (plus₁ x) (plus₁ x′) (lem x x′ x∼x′))
   where
-  extensionality : {A B : Set} → (f g : A → B) → (∀ x → f x ≡ g x) → f ≡ g
-  extensionality = {!!}
-
   lem : (x x′ : ℤ) → (x∼x′ : n ∣ ∣ x - x′ ∣) → (y : Mod n) → plus₁ x y ≡ plus₁ x′ y
   lem x x′ x∼x′ = elim _ (λ y → [ proof y ]-cong) (λ x∼x′ → proof-irrelevance _ _)
     where

@@ -300,82 +300,10 @@ plus {n} = rec (Mod n → Mod n) plus₁ (λ {x} {x′} x∼x′ → extensional
     proof y = subst (_∣_ n) (cong ∣_∣ (sym (eq y))) x∼x′
 
 _+1 : ∀ {n} → Mod n → Mod n
-_+1 {n} = rec (Mod n) (λ x → [ ℤsuc x ])
-              (λ {x} {y} x∼y → [ subst (_∣_ n) (cong ∣_∣ (sym (lem x y))) x∼y ]-cong)
-  where
-  lem : (x y : ℤ) → ℤsuc x - ℤsuc y ≡ x - y
-  lem -[1+ zero ] -[1+ zero ] = refl
-  lem -[1+ zero ] -[1+ suc y ] = refl
-  lem -[1+ suc x ] -[1+ zero ] = refl
-  lem -[1+ suc x ] -[1+ suc y ] = refl
-  lem -[1+ zero ] (+ zero) = refl
-  lem -[1+ zero ] (+ suc y) = refl
-  lem -[1+ suc x ] (+ zero) = cong (-[1+_] ∘ suc) (proj₂ ℕ-CS.+-identity x)
-  lem -[1+ suc x ] (+ suc y) = cong (-[1+_] ∘ suc) (flip-suc x y)
-  lem (+ zero) -[1+ zero ] = refl
-  lem (+ zero) -[1+ suc y ] = refl
-  lem (+ suc x) -[1+ zero ] = cong (+_ ∘ suc) (sym (flip-suc x zero))
-  lem (+ suc x) -[1+ suc y ] = cong (+_ ∘ suc) (sym (flip-suc x (suc y)))
-  lem (+ zero) (+ zero) = refl
-  lem (+ zero) (+ suc y) = refl
-  lem (+ suc x) (+ zero) = cong (+_ ∘ suc) (sym (proj₂ ℕ-CS.+-identity x))
-  lem (+ suc x) (+ suc y) = refl
+_+1 = plus [ + 1 ]
 
 _-1 : ∀ {n} → Mod n → Mod n
-_-1 {n} = rec (Mod n) (λ x → [ ℤpred x ])
-              (λ {x} {y} x∼y → [ subst (_∣_ n) (cong ∣_∣ (sym (lem x y))) x∼y ]-cong)
-  where
-  suc-+-flip : ∀ x y → x ℕ+ suc y ≡ suc x ℕ+ y
-  suc-+-flip x y =
-    begin
-      x ℕ+ suc y
-    ≡⟨ ℕ-CS.+-comm x (suc y) ⟩
-      suc y ℕ+ x
-    ≡⟨ cong suc (ℕ-CS.+-comm y x) ⟩
-      suc x ℕ+ y
-    ∎
-
-  lem : (x y : ℤ) → ℤpred x - ℤpred y ≡ x - y
-  lem -[1+ zero ] -[1+ zero ] = refl
-  lem -[1+ zero ] -[1+ suc y ] = refl
-  lem -[1+ zero ] (+ zero) = refl
-  lem -[1+ x ] (+ suc y) =
-    begin
-      -[1+ suc x ] - (+ y)
-    ≡⟨ neg-minus-pos (suc x) y ⟩
-      -[1+ y ℕ+ suc x ]
-    ≡⟨ cong -[1+_] (ℕ-CS.+-comm y (suc x)) ⟩
-      -[1+ suc x ℕ+ y ]
-    ∎
-  lem -[1+ suc x ] -[1+ zero ] = refl
-  lem -[1+ suc x ] -[1+ suc y ] = refl
-  lem -[1+ suc x ] (+ zero) = refl
-  lem (+ zero) -[1+ zero ] = refl
-  lem (+ zero) -[1+ suc y ] = refl
-  lem (+ zero) (+ zero) = refl
-  lem (+ zero) (+ suc y) =
-    begin
-      -[1+ zero ] - (+ y)
-    ≡⟨ neg-minus-pos zero y ⟩
-      -[1+ (y ℕ+ zero) ]
-    ≡⟨ cong -[1+_] (ℕ-CS.+-comm y zero) ⟩
-      -[1+ y ]
-    ∎
-  lem (+ suc x) (+ suc y) =
-    begin
-      (+ x) - (+ y)
-    ≡⟨ -→⊖ x y ⟩
-      x ⊖ y
-    ∎
-    where
-    -→⊖ : ∀ x y → (+ x) - (+ y) ≡ x ⊖ y
-    -→⊖ zero zero = refl
-    -→⊖ zero (suc y) = refl
-    -→⊖ (suc x) zero = cong (+_ ∘ suc) (proj₂ ℕ-CS.+-identity x)
-    -→⊖ (suc x) (suc y) = refl
-
-  lem (+ suc x) -[1+ y ] = cong +_ (suc-+-flip x (suc y))
-  lem (+ suc x) (+ zero) = cong +_ (suc-+-flip x zero)
+_-1 = plus [ - (+ 1) ]
 
 +1-1 : ∀ {n} → (x : Mod n) → x +1 -1 ≡ x
 +1-1 {n} = elim _ (λ x → [ proof x ]-cong) (λ x∼y → proof-irrelevance _ _)

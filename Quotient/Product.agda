@@ -1,8 +1,18 @@
 module Quotient.Product where
 
 open import Quotient
+open import Relation.Binary
+open import Function
+
+private
+  module Dummy₁ {c l} {A : Setoid c l} where
+    open Setoid A renaming (Carrier to A₀)
+
+    lift₁ : (f : A₀ → A₀) → (P : ∀ {x y} → x ≈ y → f x ≈ f y) → (Quotient A → Quotient A)
+    lift₁ f P = rec _ ([_] ∘ f) (λ x≈y → [ P x≈y ]-cong)
+open Dummy₁ public
+
 open import Data.Product
-open import Relation.Binary -- using (Setoid)
 open import Relation.Binary.PropositionalEquality hiding ([_])
 open import Relation.Binary.Product.Pointwise
 
@@ -11,12 +21,14 @@ A ×-quot B = Quotient (A ×-setoid B)
 
 private
   open import Relation.Binary.PropositionalEquality using (Extensionality)
-  open import Level using () renaming (zero to ℓ₀)
+  open import Level using (suc) renaming (zero to ℓ₀)
   postulate
-    extensionality : Extensionality ℓ₀ ℓ₀
+    extensionality : ∀ {ℓ ℓ′} → Extensionality ℓ ℓ′
 
-curry-quot : ∀ {A B : Setoid ℓ₀ _} {C : Set} → (A ×-quot B → C) → (Quotient A → Quotient B → C)
-curry-quot {A} {B} {C} f = rec _ f₁ (λ x∼y → extensionality (elim _ (λ t → lem x∼y t) (λ x∼y → proof-irrelevance _ _)))
+curry-quot : ∀ {c ℓ ℓ′} → ∀ {A B : Setoid c ℓ} {C : Set ℓ′}
+           → (A ×-quot B → C) → (Quotient A → Quotient B → C)
+curry-quot {A = A} {B = B} {C = C} f =
+  rec _ f₁ (λ x∼y → extensionality (elim _ (λ t → lem x∼y t) (λ x∼y → proof-irrelevance _ _)))
   where
   module SA = Setoid A
   module SB = Setoid B
@@ -27,3 +39,16 @@ curry-quot {A} {B} {C} f = rec _ f₁ (λ x∼y → extensionality (elim _ (λ t
 
   lem : {x y : Setoid.Carrier A} → (x∼y : SA._≈_ x y) → ∀ t → f₁ x [ t ] ≡ f₁ y [ t ]
   lem {x} {y} x∼y t = cong f [ (x∼y , SB.refl) ]-cong
+
+private
+  module Dummy₂ {c l} {A : Setoid c l} where
+    open Setoid A renaming (Carrier to A₀)
+
+    lift₂ : (f : A₀ → A₀ → A₀) → (P : ∀ {x y t u} → x ≈ y → t ≈ u → f x t ≈ f y u)
+          → (Quotient A → Quotient A → Quotient A)
+    lift₂ f P = curry-quot f′
+      where
+      f′ : A ×-quot A → Quotient A
+      f′ = rec _ ([_] ∘ uncurry f) (λ {xt} {yu} eq → [ (P (proj₁ eq) (proj₂ eq)) ]-cong)
+open Dummy₂ public
+

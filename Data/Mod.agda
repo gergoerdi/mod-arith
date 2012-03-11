@@ -272,61 +272,12 @@ Mod₀ n = record
 Mod : ℕ → Set
 Mod n = Quotient (Mod₀ n)
 
-private
-  open import Level using () renaming (zero to ℓ₀)
-  postulate
-    extensionality : Extensionality ℓ₀ ℓ₀
-
-open import Quotient.Product
-
-plus' : ∀ {n} → Mod n → Mod n → Mod n
-plus' = curry-quot plus₀
-  where
-  plus₀ : ∀ {n} → Mod₀ n ×-quot Mod₀ n → Mod n
-  plus₀ {n} = rec _ ([_] ∘ uncurry _+_ ) (λ {xt} {yu} eq → [ well-defined {xt} {yu} eq ]-cong)
-    where
-    proof : ∀ {x t y u} → (n ∣ ∣ x - y ∣) → (n ∣ ∣ t - u ∣) → n ∣ ∣ (x + t) - (y + u) ∣
-    proof {x} {t} {y} {u} x∼y t∼u = subst ((_∣_ n) ∘ ∣_∣) (sym (eq x y t u)) (∣-abs-+ (x - y) (t - u) x∼y t∼u)
-      where
-      eq : ∀ a b c d → (a + c) - (b + d) ≡ (a - b) + (c - d)
-      eq a b c d =
-        begin
-          (a + c) - (b + d)
-        ≡⟨ cong (_-_ (a + c)) (ℤ-CR.+-comm b d) ⟩
-          (a + c) - (d + b)
-        ≡⟨ ℤ-CR.+-assoc a c (- (d + b)) ⟩
-          a + (c - (d + b))
-        ≡⟨ cong (_+_ a ∘ _+_ c) (lem d b) ⟩
-          a + (c + (- d + - b))
-        ≡⟨ cong (_+_ a) (sym (ℤ-CR.+-assoc c (- d) (- b))) ⟩
-          a + ((c - d) - b)
-        ≡⟨ sym (ℤ-CR.+-assoc a (c - d) (- b)) ⟩
-          (a + (c - d)) - b
-        ≡⟨ cong (λ x → x - b) (ℤ-CR.+-comm a (c - d)) ⟩
-          ((c - d) + a) - b
-        ≡⟨ ℤ-CR.+-assoc (c - d) a (- b) ⟩
-          (c - d) + (a - b)
-        ≡⟨ ℤ-CR.+-comm (c - d) (a - b) ⟩
-          (a - b) + (c - d)
-        ∎
-        where
-        lem : ∀ x y → - (x + y) ≡ (- x) + (- y)
-        lem -[1+ x ] -[1+ y ] = cong (+_ ∘ suc) (sym (flip-suc x y))
-        lem -[1+ x ] (+ zero) = cong (+_ ∘ suc) (sym (proj₂ ℕ-CS.+-identity x))
-        lem -[1+ x ] (+ (suc y)) = sym (flip-⊖ x y)
-        lem (+ zero) -[1+ y ] = refl
-        lem (+ suc x) -[1+ y ] = sym (flip-⊖ y x)
-        lem (+ zero) (+ y) = sym (proj₁ ℤ-CR.+-identity (- (+ y)))
-        lem (+ suc x) (+ zero) = cong -[1+_] (proj₂ ℕ-CS.+-identity x)
-        lem (+ suc x) (+ suc y) = cong -[1+_] (flip-suc x y)
-
-    well-defined : ∀ {xt yu} → (n ∣ ∣ proj₁ xt - proj₁ yu ∣) × (n ∣ ∣ proj₂ xt - proj₂ yu ∣)
-                 → n ∣ ∣(uncurry _+_ xt) - (uncurry _+_ yu)∣
-    well-defined {x , t} {y , u} (x∼y , t∼u) = proof {x} {t} {y} {u} x∼y t∼u
-
 plus : ∀ {n} → Mod n → Mod n → Mod n
 plus {n} = rec _ plus₁ (λ {x} {x′} x∼x′ → extensionality (lem x x′ x∼x′))
   where
+  postulate
+    extensionality : ∀ {ℓ ℓ′} → Extensionality ℓ ℓ′
+
   plus₁ : ∀ {n} → ℤ → Mod n → Mod n
   plus₁ {n} x = rec _ (λ y → [ x + y ])
                     (λ {y} {y′} y∼y′ → [ subst (_∣_ n) (cong ∣_∣ (sym (telescope- x y y′))) y∼y′ ]-cong)
@@ -347,6 +298,42 @@ plus {n} = rec _ plus₁ (λ {x} {x′} x∼x′ → extensionality (lem x x′ 
     proof : (y : ℤ) → n ∣ ∣ (x + y) - (x′ + y) ∣
     proof y = subst (_∣_ n) (cong ∣_∣ (sym (eq y))) x∼x′
 
+open import Quotient.Product
+
+plus′ : ∀ {n} → Mod n → Mod n → Mod n
+plus′ {n} = lift₂ _+_ (λ {x} {y} {t} {u} → proof {x} {y} {t} {u})
+  where
+  proof : ∀ {x y t u} → (n ∣ ∣ x - y ∣) → (n ∣ ∣ t - u ∣) → n ∣ ∣ (x + t) - (y + u) ∣
+  proof {x} {y} {t} {u} x∼y t∼u = subst ((_∣_ n) ∘ ∣_∣) (sym (eq x y t u)) (∣-abs-+ (x - y) (t - u) x∼y t∼u)
+    where
+    eq : ∀ a b c d → (a + c) - (b + d) ≡ (a - b) + (c - d)
+    eq a b c d =
+      begin
+        (a + c) - (b + d)
+      ≡⟨ cong (_-_ (a + c)) (ℤ-CR.+-comm b d) ⟩
+        (a + c) - (d + b)
+      ≡⟨ ℤ-CR.+-assoc a c (- (d + b)) ⟩
+        a + (c - (d + b))
+      ≡⟨ cong (_+_ a ∘ _+_ c) (sym (ℤ-ACR.-‿+-comm d b)) ⟩
+        a + (c + (- d + - b))
+      ≡⟨ cong (_+_ a) (sym (ℤ-CR.+-assoc c (- d) (- b))) ⟩
+        a + ((c - d) - b)
+      ≡⟨ sym (ℤ-CR.+-assoc a (c - d) (- b)) ⟩
+        (a + (c - d)) - b
+      ≡⟨ cong (λ x → x - b) (ℤ-CR.+-comm a (c - d)) ⟩
+        ((c - d) + a) - b
+      ≡⟨ ℤ-CR.+-assoc (c - d) a (- b) ⟩
+        (c - d) + (a - b)
+      ≡⟨ ℤ-CR.+-comm (c - d) (a - b) ⟩
+        (a - b) + (c - d)
+      ∎
+      where
+      import Algebra.RingSolver.AlmostCommutativeRing as ACR
+      module ℤ-ACR = ACR.AlmostCommutativeRing (ACR.fromCommutativeRing Integer.commutativeRing)
+
+-- plus-comm : ∀ {n} → (x y : Mod n) → plus x y ≡ plus y x
+-- plus-comm x y = elim  _ {!!} {!!} {!!}
+
 _+1 : ∀ {n} → Mod n → Mod n
 _+1 = plus [ + 1 ]
 
@@ -356,23 +343,15 @@ _-1 = plus [ - (+ 1) ]
 +1-1 : ∀ {n} → (x : Mod n) → x +1 -1 ≡ x
 +1-1 {n} = elim _ (λ x → [ proof x ]-cong) (λ x∼y → proof-irrelevance _ _)
   where
+  pred-suc : ∀ x → ℤpred (ℤsuc x) ≡ x
+  pred-suc -[1+ zero ] = refl
+  pred-suc -[1+ suc _ ] = refl
+  pred-suc (+ _) = refl
+
   proof : ∀ x → n ∣ ∣ ℤpred (ℤsuc x) - x ∣
   proof x = divides 0 (cong ∣_∣ (lem x))
     where
-    lem : ∀ {k} → ∀ x → -[1+ k ] + (+ (suc k) + x) - x ≡ + 0
-    lem {k} x =
-      begin
-        -[1+ k ] + (+ suc k + x) - x
-      ≡⟨ cong (λ a → a - x) (sym (ℤ-CR.+-assoc -[1+ k ] (+ suc k) x)) ⟩
-        (-[1+ k ] + (+ suc k)) + x - x
-      ≡⟨ cong (λ a → a + x - x) {k ⊖ k} refl ⟩
-        ((- (+ suc k)) + (+ suc k)) + x - x
-      ≡⟨ cong (λ a → a + x - x) (proj₁ ℤ-CR.-‿inverse -[1+ k ]) ⟩
-        + 0 + x - x
-      ≡⟨ cong (λ z → z - x) (proj₁ ℤ-CR.+-identity x) ⟩
-        x - x
-      ≡⟨ proj₂ ℤ-CR.-‿inverse x ⟩
-        + 0
-      ∎
+    lem : ∀ x → ℤpred (ℤsuc x) - x ≡ + 0
+    lem x = trans (cong (λ a → a - x) (pred-suc x)) (proj₂ ℤ-CR.-‿inverse x)
 
 

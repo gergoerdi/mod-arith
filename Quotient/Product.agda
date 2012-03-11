@@ -9,7 +9,8 @@ private
   module Dummy₁ {c l} {A : Setoid c l} where
     open Setoid A renaming (Carrier to A₀)
 
-    lift₁ : (f : Op₁ A₀) → (P : ∀ {x y} → x ≈ y → f x ≈ f y) → (Op₁ (Quotient A))
+    lift₁ : (f : Op₁ A₀) → f Preserves _≈_ ⟶ _≈_
+          → Op₁ (Quotient A)
     lift₁ f P = rec _ ([_] ∘ f) (λ x≈y → [ P x≈y ]-cong)
 open Dummy₁ public
 
@@ -45,8 +46,8 @@ private
   module Dummy₂ {c l} {A : Setoid c l} where
     open Setoid A renaming (Carrier to A₀)
 
-    lift₂ : (f : Op₂ A₀) → (P : ∀ {x y t u} → x ≈ y → t ≈ u → f x t ≈ f y u)
-          → (Op₂ (Quotient A))
+    lift₂ : (f : Op₂ A₀) → f Preserves₂ _≈_ ⟶ _≈_ ⟶ _≈_
+          → Op₂ (Quotient A)
     lift₂ f P = curry-quot f′
       where
       f′ : A ×-quot A → Quotient A

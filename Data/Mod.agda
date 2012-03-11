@@ -272,36 +272,10 @@ Mod₀ n = record
 Mod : ℕ → Set
 Mod n = Quotient (Mod₀ n)
 
-plus : ∀ {n} → Mod n → Mod n → Mod n
-plus {n} = rec _ plus₁ (λ {x} {x′} x∼x′ → extensionality (lem x x′ x∼x′))
-  where
-  postulate
-    extensionality : ∀ {ℓ ℓ′} → Extensionality ℓ ℓ′
-
-  plus₁ : ∀ {n} → ℤ → Mod n → Mod n
-  plus₁ {n} x = rec _ (λ y → [ x + y ])
-                    (λ {y} {y′} y∼y′ → [ subst (_∣_ n) (cong ∣_∣ (sym (telescope- x y y′))) y∼y′ ]-cong)
-
-  lem : (x x′ : ℤ) → (x∼x′ : n ∣ ∣ x - x′ ∣) → ∀ y → plus₁ x y ≡ plus₁ x′ y
-  lem x x′ x∼x′ = elim _ (λ y → [ proof y ]-cong) (λ x∼x′ → proof-irrelevance _ _)
-    where
-    eq : (y : ℤ) → (x + y) - (x′ + y) ≡ x - x′
-    eq y =
-      begin
-        (x + y) - (x′ + y)
-      ≡⟨ cong₂ _-_ (ℤ-CR.+-comm x y) (ℤ-CR.+-comm x′ y) ⟩
-        (y + x) - (y + x′)
-      ≡⟨ telescope- y x x′ ⟩
-        x - x′
-      ∎
-
-    proof : (y : ℤ) → n ∣ ∣ (x + y) - (x′ + y) ∣
-    proof y = subst (_∣_ n) (cong ∣_∣ (sym (eq y))) x∼x′
-
 open import Quotient.Product
 
-plus′ : ∀ {n} → Mod n → Mod n → Mod n
-plus′ {n} = lift₂ _+_ (λ {x} {y} {t} {u} → proof {x} {y} {t} {u})
+plus : ∀ {n} → Mod n → Mod n → Mod n
+plus {n} = lift₂ _+_ (λ {x} {y} {t} {u} → proof {x} {y} {t} {u})
   where
   proof : ∀ {x y t u} → (n ∣ ∣ x - y ∣) → (n ∣ ∣ t - u ∣) → n ∣ ∣ (x + t) - (y + u) ∣
   proof {x} {y} {t} {u} x∼y t∼u = subst ((_∣_ n) ∘ ∣_∣) (sym (eq x y t u)) (∣-abs-+ (x - y) (t - u) x∼y t∼u)

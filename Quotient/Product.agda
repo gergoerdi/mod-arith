@@ -3,12 +3,13 @@ module Quotient.Product where
 open import Quotient
 open import Relation.Binary
 open import Function
+open import Algebra.FunctionProperties using (Op₁; Op₂)
 
 private
   module Dummy₁ {c l} {A : Setoid c l} where
     open Setoid A renaming (Carrier to A₀)
 
-    lift₁ : (f : A₀ → A₀) → (P : ∀ {x y} → x ≈ y → f x ≈ f y) → (Quotient A → Quotient A)
+    lift₁ : (f : Op₁ A₀) → (P : ∀ {x y} → x ≈ y → f x ≈ f y) → (Op₁ (Quotient A))
     lift₁ f P = rec _ ([_] ∘ f) (λ x≈y → [ P x≈y ]-cong)
 open Dummy₁ public
 
@@ -44,8 +45,8 @@ private
   module Dummy₂ {c l} {A : Setoid c l} where
     open Setoid A renaming (Carrier to A₀)
 
-    lift₂ : (f : A₀ → A₀ → A₀) → (P : ∀ {x y t u} → x ≈ y → t ≈ u → f x t ≈ f y u)
-          → (Quotient A → Quotient A → Quotient A)
+    lift₂ : (f : Op₂ A₀) → (P : ∀ {x y t u} → x ≈ y → t ≈ u → f x t ≈ f y u)
+          → (Op₂ (Quotient A))
     lift₂ f P = curry-quot f′
       where
       f′ : A ×-quot A → Quotient A

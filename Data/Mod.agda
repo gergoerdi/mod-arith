@@ -6,7 +6,7 @@ open import Data.Integer hiding (_*_; _≤_) renaming (suc to ℤsuc; pred to �
 open import Data.Integer.Properties
 open import Data.Nat.Divisibility
 open import Quotient -- http://www.cs.nott.ac.uk/~txa/AIMXV/Quotient.html/Quotient.html
-open import Function using (_∘_; const)
+open import Function using (_∘_)
 
 open import Relation.Binary
 open import Relation.Binary.PropositionalEquality hiding ([_])
@@ -21,6 +21,9 @@ private
   module ℤ-CR = CommutativeRing Integer.commutativeRing
 private
   module ℕ-Ord = StrictTotalOrder Nat.strictTotalOrder
+import Algebra.RingSolver.AlmostCommutativeRing as ACR
+private
+  module ℤ-ACR = ACR.AlmostCommutativeRing (ACR.fromCommutativeRing Integer.commutativeRing)
 open import Data.Product
 
 private
@@ -43,8 +46,8 @@ private
   flip-⊖ (suc x)  zero    = refl
   flip-⊖ (suc x)  (suc y) = flip-⊖ x y
 
-  telescope+ : (x y z : ℤ) → (x - y) + (y - z) ≡ x - z
-  telescope+ x y z =
+  telescope : (x y z : ℤ) → (x - y) + (y - z) ≡ x - z
+  telescope x y z =
     begin
       (x - y) + (y - z)
     ≡⟨ ℤ-CR.+-assoc x (- y) (y - z) ⟩
@@ -58,34 +61,6 @@ private
     ≡⟨ cong (λ a → a - z) (proj₂ ℤ-CR.+-identity x) ⟩
       x - z
     ∎
-
-  telescope- : (x y z : ℤ) → (x + y) - (x + z) ≡ y - z
-  telescope- x y z =
-    begin
-      (x + y) - (x + z)
-    ≡⟨ cong (λ a → a - (x + z)) (ℤ-CR.+-comm x y) ⟩
-      (y + x) - (x + z)
-    ≡⟨ ℤ-CR.+-assoc y x (- (x + z)) ⟩
-      y + (x - (x + z))
-    ≡⟨ cong (λ a → y + (x + a)) (lem x z) ⟩
-      y + (x + (- x - z))
-    ≡⟨ cong (λ a → y + a) (sym (ℤ-CR.+-assoc x (- x) (- z))) ⟩
-      y + (x - x - z)
-    ≡⟨ cong (λ a → y + (a - z)) (proj₂ ℤ-CR.-‿inverse x) ⟩
-      y + (+ 0 - z)
-    ≡⟨ cong (λ a → y + a) (proj₁ ℤ-CR.+-identity (- z)) ⟩
-      y - z
-    ∎
-    where
-    lem : (x y : ℤ) → - (x + y) ≡ - x - y
-    lem -[1+ x ] -[1+ y ] = cong (+_ ∘ suc) (sym (flip-suc x y))
-    lem -[1+ x ] (+ zero) = cong (+_ ∘ suc) (sym (proj₂ ℕ-CS.+-identity x))
-    lem -[1+ x ] (+ suc y) = sym (flip-⊖ x y)
-    lem (+ zero) -[1+ y ] = refl
-    lem (+ suc x) -[1+ y ] = sym (flip-⊖ y x)
-    lem (+ zero) (+ y) = sym (proj₁ ℤ-CR.+-identity (- (+ y)))
-    lem (+ suc x) (+ zero) = cong -[1+_] (proj₂ ℕ-CS.+-identity x)
-    lem (+ suc x) (+ suc y) = cong -[1+_] (flip-suc x y)
 
   abs-⊖-comm : (x y : ℕ) → ∣ x ⊖ y ∣ ≡ ∣ y ⊖ x ∣
   abs-⊖-comm zero zero = refl
@@ -238,6 +213,8 @@ private
   ∣-abs-+ {n} -[1+ x ] (+ y) d d′ = div-diff d d′
   ∣-abs-+ {n} (+ x) -[1+ y ] d d′ = div-diff d′ d
 
+
+
 Mod₀ : ℕ → Setoid _ _
 Mod₀ n = record
   { Carrier = ℤ
@@ -254,23 +231,18 @@ Mod₀ n = record
     x ∼ y = n ∣ ∣ x - y ∣
 
     reflexive : Reflexive _∼_
-    reflexive {x} = divides zero (lem x)
-      where
-      lem : (x : ℤ) → ∣ x - x ∣ ≡ 0
-      lem -[1+ x ] = cong ∣_∣ (n⊖n≡0 x)
-      lem (+ zero) = refl
-      lem (+ suc x) = cong ∣_∣ (n⊖n≡0 x)
+    reflexive {x} = divides zero (cong ∣_∣ (proj₂ ℤ-CR.-‿inverse x))
 
     symmetric : Symmetric _∼_
     symmetric {x} {y} (divides q eq) = divides q (trans (abs-flip y x) eq)
 
     transitive : Transitive _∼_
-    transitive {x} {y} {z} d d′ = subst (_∣_ n) (cong ∣_∣ (telescope+ x y z)) (∣-abs-+ (x - y) (y - z) d d′)
-
-
+    transitive {x} {y} {z} d d′ = subst (_∣_ n) (cong ∣_∣ (telescope x y z)) (∣-abs-+ (x - y) (y - z) d d′)
 
 Mod : ℕ → Set
 Mod n = Quotient (Mod₀ n)
+
+
 
 open import Quotient.Product
 
@@ -301,12 +273,8 @@ plus {n} = lift₂ _+_ (λ {x} {y} {t} {u} → proof {x} {y} {t} {u})
       ≡⟨ ℤ-CR.+-comm (c - d) (a - b) ⟩
         (a - b) + (c - d)
       ∎
-      where
-      import Algebra.RingSolver.AlmostCommutativeRing as ACR
-      module ℤ-ACR = ACR.AlmostCommutativeRing (ACR.fromCommutativeRing Integer.commutativeRing)
 
--- plus-comm : ∀ {n} → (x y : Mod n) → plus x y ≡ plus y x
--- plus-comm x y = elim  _ {!!} {!!} {!!}
+
 
 _+1 : ∀ {n} → Mod n → Mod n
 _+1 = plus [ + 1 ]
@@ -327,5 +295,3 @@ _-1 = plus [ - (+ 1) ]
     where
     lem : ∀ x → ℤpred (ℤsuc x) - x ≡ + 0
     lem x = trans (cong (λ a → a - x) (pred-suc x)) (proj₂ ℤ-CR.-‿inverse x)
-
-

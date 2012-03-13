@@ -3,7 +3,7 @@ module Data.Mod where
 open import Data.Nat renaming (_+_ to _ℕ+_)
 open import Data.Nat.Properties
 open import Data.Integer hiding (_*_; _≤_) renaming (suc to ℤsuc; pred to ℤpred)
-open import Data.Integer.Properties
+open import Data.Integer.Properties as Integer
 open import Data.Nat.Divisibility
 open import Quotient -- http://www.cs.nott.ac.uk/~txa/AIMXV/Quotient.html/Quotient.html
 open import Function using (_∘_)
@@ -253,27 +253,9 @@ plus {n} = lift₂ _+_ (λ {x} {y} {t} {u} → proof {x} {y} {t} {u})
   proof {x} {y} {t} {u} x∼y t∼u = subst ((_∣_ n) ∘ ∣_∣) (sym (eq x y t u)) (∣-abs-+ (x - y) (t - u) x∼y t∼u)
     where
     eq : ∀ a b c d → (a + c) - (b + d) ≡ (a - b) + (c - d)
-    eq a b c d =
-      begin
-        (a + c) - (b + d)
-      ≡⟨ cong (_-_ (a + c)) (ℤ-CR.+-comm b d) ⟩
-        (a + c) - (d + b)
-      ≡⟨ ℤ-CR.+-assoc a c (- (d + b)) ⟩
-        a + (c - (d + b))
-      ≡⟨ cong (_+_ a ∘ _+_ c) (sym (ℤ-ACR.-‿+-comm d b)) ⟩
-        a + (c + (- d + - b))
-      ≡⟨ cong (_+_ a) (sym (ℤ-CR.+-assoc c (- d) (- b))) ⟩
-        a + ((c - d) - b)
-      ≡⟨ sym (ℤ-CR.+-assoc a (c - d) (- b)) ⟩
-        (a + (c - d)) - b
-      ≡⟨ cong (λ x → x - b) (ℤ-CR.+-comm a (c - d)) ⟩
-        ((c - d) + a) - b
-      ≡⟨ ℤ-CR.+-assoc (c - d) a (- b) ⟩
-        (c - d) + (a - b)
-      ≡⟨ ℤ-CR.+-comm (c - d) (a - b) ⟩
-        (a - b) + (c - d)
-      ∎
-
+    eq = solve 4 (λ a b c d → (a :+ c) :- (b :+ d) := (a :- b) :+ (c :- d)) refl
+      where
+      open Integer.RingSolver
 
 
 _+1 : ∀ {n} → Mod n → Mod n
@@ -285,13 +267,8 @@ _-1 = plus [ - (+ 1) ]
 +1-1 : ∀ {n} → (x : Mod n) → x +1 -1 ≡ x
 +1-1 {n} = elim _ (λ x → [ proof x ]-cong) (λ x∼y → proof-irrelevance _ _)
   where
-  pred-suc : ∀ x → ℤpred (ℤsuc x) ≡ x
-  pred-suc -[1+ zero ] = refl
-  pred-suc -[1+ suc _ ] = refl
-  pred-suc (+ _) = refl
-
   proof : ∀ x → n ∣ ∣ ℤpred (ℤsuc x) - x ∣
-  proof x = divides 0 (cong ∣_∣ (lem x))
+  proof = divides 0 ∘ cong ∣_∣ ∘ solve 1 (λ x → (:- (con (+ 1)) :+ ((con (+ 1) :+ x))) :- x := con (+ 0)) refl
     where
-    lem : ∀ x → ℤpred (ℤsuc x) - x ≡ + 0
-    lem x = trans (cong (λ a → a - x) (pred-suc x)) (proj₂ ℤ-CR.-‿inverse x)
+    open Integer.RingSolver
+

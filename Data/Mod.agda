@@ -2,7 +2,7 @@ module Data.Mod where
 
 module Dummy where
   open import Data.Nat using (ℕ)
-  open import Data.Integer hiding (_*_; _≤_) renaming (suc to ℤsuc; pred to ℤpred)
+  open import Data.Integer
   open import Data.Nat.Divisibility
   open import Quotient -- http://www.cs.nott.ac.uk/~txa/AIMXV/Quotient.html/Quotient.html
   open import Function using (_∘_; _⟨_⟩_)
@@ -47,6 +47,7 @@ module Dummy where
   Mod n = Quotient (Mod₀ n)
 
   open import Quotient.Op
+  open Integer.RingSolver
 
   plus : ∀ {n} → Mod n → Mod n → Mod n
   plus {n} = lift₂ _+_ (λ {x} {y} {t} {u} → proof {x} {y} {t} {u})
@@ -56,8 +57,6 @@ module Dummy where
       where
       eq : _
       eq = solve 4 (λ a b c d → (a :+ c) :- (b :+ d) := (a :- b) :+ (c :- d)) refl
-        where
-        open Integer.RingSolver
 
   minus : ∀ {n} → Mod n → Mod n → Mod n
   minus {n} = lift₂ _-_ (λ {x} {y} {t} {u} → proof {x} {y} {t} {u})
@@ -67,8 +66,6 @@ module Dummy where
       where
       eq : _
       eq = solve 4 (λ a b c d → (a :- c) :- (b :- d) := (a :- b) :- (c :- d)) refl
-        where
-        open Integer.RingSolver
 
   -- Derived operations
   _+1 : ∀ {n} → Mod n → Mod n
@@ -82,7 +79,5 @@ module Dummy where
     where
     proof : ∀ x → n ∣ ∣ (x + (+ 1) - (+ 1)) - x ∣
     proof = divides 0 ∘ cong ∣_∣ ∘ solve 1 (λ x → x :+ con 1# :- con 1# :- x := con 0#) refl
-      where
-      open Integer.RingSolver
 
 open Dummy public renaming (plus to _+_; minus to _-_)

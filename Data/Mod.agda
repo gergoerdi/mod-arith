@@ -6,7 +6,7 @@ open import Data.Integer hiding (_*_; _≤_) renaming (suc to ℤsuc; pred to �
 open import Data.Integer.Properties as Integer
 open import Data.Nat.Divisibility
 open import Quotient -- http://www.cs.nott.ac.uk/~txa/AIMXV/Quotient.html/Quotient.html
-open import Function using (_∘_)
+open import Function using (_∘_; _⟨_⟩_)
 
 open import Relation.Binary
 open import Relation.Binary.PropositionalEquality hiding ([_])
@@ -213,6 +213,13 @@ private
   ∣-abs-+ {n} -[1+ x ] (+ y) d d′ = div-diff d d′
   ∣-abs-+ {n} (+ x) -[1+ y ] d d′ = div-diff d′ d
 
+  ∣-abs‿- : ∀ {n : ℕ} → (x y : ℤ) → n ∣ ∣ x ∣ → n ∣ ∣ y ∣ → n ∣ ∣ x - y ∣
+  ∣-abs‿- {n} x y d d′  = ∣-abs-+ x (- y) d (subst (_∣_ n) (abs-neg y) d′)
+    where
+    abs-neg : ∀ x → ∣ x ∣ ≡ ∣ - x ∣
+    abs-neg -[1+ _ ] = refl
+    abs-neg (+ zero) = refl
+    abs-neg (+ suc _) = refl
 
 
 Mod₀ : ℕ → Setoid _ _
@@ -234,7 +241,7 @@ Mod₀ n = record
     reflexive {x} = divides zero (cong ∣_∣ (proj₂ ℤ-CR.-‿inverse x))
 
     symmetric : Symmetric _∼_
-    symmetric {x} {y} (divides q eq) = divides q (trans (abs-flip y x) eq)
+    symmetric {x} {y} (divides q eq) = divides q (abs-flip y x ⟨ trans ⟩ eq)
 
     transitive : Transitive _∼_
     transitive {x} {y} {z} d d′ = subst (_∣_ n) (cong ∣_∣ (telescope x y z)) (∣-abs-+ (x - y) (y - z) d d′)
@@ -244,7 +251,7 @@ Mod n = Quotient (Mod₀ n)
 
 
 
-open import Quotient.Product
+open import Quotient.Op
 
 plus : ∀ {n} → Mod n → Mod n → Mod n
 plus {n} = lift₂ _+_ (λ {x} {y} {t} {u} → proof {x} {y} {t} {u})
@@ -252,23 +259,38 @@ plus {n} = lift₂ _+_ (λ {x} {y} {t} {u} → proof {x} {y} {t} {u})
   proof : ∀ {x y t u} → (n ∣ ∣ x - y ∣) → (n ∣ ∣ t - u ∣) → n ∣ ∣ (x + t) - (y + u) ∣
   proof {x} {y} {t} {u} x∼y t∼u = subst ((_∣_ n) ∘ ∣_∣) (sym (eq x y t u)) (∣-abs-+ (x - y) (t - u) x∼y t∼u)
     where
-    eq : ∀ a b c d → (a + c) - (b + d) ≡ (a - b) + (c - d)
+    eq : _
     eq = solve 4 (λ a b c d → (a :+ c) :- (b :+ d) := (a :- b) :+ (c :- d)) refl
       where
       open Integer.RingSolver
 
+minus : ∀ {n} → Mod n → Mod n → Mod n
+minus {n} = lift₂ _-_ (λ {x} {y} {t} {u} → proof {x} {y} {t} {u})
+  where
+  proof : ∀ {x y t u} → (n ∣ ∣ x - y ∣) → (n ∣ ∣ t - u ∣) → n ∣ ∣ (x - t) - (y - u) ∣
+  proof {x} {y} {t} {u} x∼y t∼u = subst ((_∣_ n) ∘ ∣_∣) (sym (eq x y t u)) (∣-abs‿- (x + - y) (t + - u) x∼y t∼u)
+    where
+    eq : _
+    eq = solve 4 (λ a b c d → (a :- c) :- (b :- d) := (a :- b) :- (c :- d)) refl
+      where
+      open Integer.RingSolver
+
+
+open ℤ-CR using (1#; 0#)
 
 _+1 : ∀ {n} → Mod n → Mod n
-_+1 = plus [ + 1 ]
+_+1 x = plus x [ 1# ]
 
 _-1 : ∀ {n} → Mod n → Mod n
-_-1 = plus [ - (+ 1) ]
+_-1 x = minus x [ 1# ]
 
 +1-1 : ∀ {n} → (x : Mod n) → x +1 -1 ≡ x
 +1-1 {n} = elim _ (λ x → [ proof x ]-cong) (λ x∼y → proof-irrelevance _ _)
   where
-  proof : ∀ x → n ∣ ∣ ℤpred (ℤsuc x) - x ∣
-  proof = divides 0 ∘ cong ∣_∣ ∘ solve 1 (λ x → (:- (con (+ 1)) :+ ((con (+ 1) :+ x))) :- x := con (+ 0)) refl
+  proof : ∀ x → n ∣ ∣ (x + (+ 1) - (+ 1)) - x ∣
+  proof = divides 0 ∘ cong ∣_∣ ∘ solve 1 (λ x → x :+ con 1# :- con 1# :- x := con 0#) refl
     where
     open Integer.RingSolver
 
+-- plus-minus : ∀ {n} → ∀ x y → (x ⟨ plus ⟩ y ⟨ minus ⟩ y) ≡ x
+-- plus-minus {n} = rec _ {!!} {!!}

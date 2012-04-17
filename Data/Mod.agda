@@ -89,4 +89,14 @@ module Dummy where
       proof : ∀ x → n ∣ ∣ (x + (+ 1) - (+ 1)) - x ∣
       proof = divides 0 ∘ P.cong ∣_∣ ∘ solve 1 (λ x → x :+ con 1# :- con 1# :- x := con 0#) P.refl
 
+  module Properties {n : ℕ} where
+    import Algebra.FunctionProperties as FunProp
+    open FunProp (_≡_ {A = Mod n})
+
+    plus-comm : Commutative plus
+    plus-comm x y = elim _ _ (λ x → elim _ _ (λ y → {!!}) {!!} y) {!!} x
+      where
+      lem : ∀ x y → n ∣ ∣ (x + y) - (y + x) ∣
+      lem x y = divides 0 (P.cong ∣_∣ (solve 2 (λ x y → (x :+ y) :- (y :+ x) := con 0#) P.refl x y))
+
 open Dummy public renaming (plus to _+_; minus to _-_)

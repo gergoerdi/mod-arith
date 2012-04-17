@@ -4,7 +4,7 @@ module Dummy where
   open import Data.Nat using (ℕ)
   open import Data.Integer
   open import Data.Nat.Divisibility
-  open import Quotient -- http://www.cs.nott.ac.uk/~txa/AIMXV/Quotient.html/Quotient.html
+  open import Quotient
   open import Function using (_∘_; _⟨_⟩_)
 
   open import Relation.Binary
@@ -75,7 +75,7 @@ module Dummy where
   _-1 x = x ⟨ minus ⟩ [ 1# ]
 
   +1-1 : ∀ {n} → (x : Mod n) → x +1 -1 ≡ x
-  +1-1 {n} = elim _ (λ x → [ proof x ]-cong) (λ x∼y → proof-irrelevance _ _)
+  +1-1 {n} = elim _ _ (λ x → [ proof x ]-cong) (λ x∼y → proof-irrelevance _ _)
     where
     proof : ∀ x → n ∣ ∣ (x + (+ 1) - (+ 1)) - x ∣
     proof = divides 0 ∘ cong ∣_∣ ∘ solve 1 (λ x → x :+ con 1# :- con 1# :- x := con 0#) refl

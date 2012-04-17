@@ -26,7 +26,7 @@ private
     lift₂ f P = rec _ (λ x → rec _ (λ y → [ f x y ])
                     (λ t≈u → [ P refl t≈u ]-cong))
                     (λ x≈y → extensionality
-                      (elim _ (λ _ → [ P x≈y refl ]-cong)
+                      (elim _ _ (λ _ → [ P x≈y refl ]-cong)
                       (λ _ → proof-irrelevance _ _)))
 open Dummy public
 

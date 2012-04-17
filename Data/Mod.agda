@@ -6,7 +6,7 @@ module Dummy where
   open import Data.Nat.Divisibility
   open import Quotient
   open import Function using (_∘_; _⟨_⟩_)
-  open import Level
+  import Level
 
   open import Relation.Binary
   open import Relation.Binary.PropositionalEquality as P using (_≡_)

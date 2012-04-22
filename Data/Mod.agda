@@ -102,10 +102,25 @@ module Dummy {n : ℕ} where
     import Algebra.FunctionProperties as FunProp
     open FunProp (_≡_ {A = Mod})
 
+    import Data.Integer.Properties as Integer
+    private
+      module ℤ-CR = CommutativeRing Integer.commutativeRing
+
+    plus-assoc : Associative plus
+    plus-assoc = lift-assoc′ plus₀ ℤ-CR.+-assoc
+
     plus-comm : Commutative plus
-    plus-comm = lift-comm plus₀ lem
+    plus-comm = lift-comm′ plus₀ ℤ-CR.+-comm
+
+    open import Algebra.Structures
+
+    isSemigroup : IsSemigroup _≡_ plus
+    isSemigroup = record
+      { isEquivalence = isEquivalence
+      ; assoc = plus-assoc
+      ; ∙-cong = cong₂ plus
+      }
       where
-      lem : ∀ x y → n ∣ ∣ (x + y) - (y + x) ∣
-      lem x y = divides 0 (P.cong ∣_∣ (solve 2 (λ x y → (x :+ y) :- (y :+ x) := con 0#) P.refl x y))
+      open import Relation.Binary.PropositionalEquality
 
 open Dummy public renaming (plus to _+_; minus to _-_)

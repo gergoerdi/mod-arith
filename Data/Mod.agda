@@ -94,9 +94,17 @@ module Dummy where
     open FunProp (_≡_ {A = Mod n})
 
     plus-comm : Commutative plus
-    plus-comm x y = elim (Mod₀ n) _ (λ x → elim (Mod₀ n) _ (λ y → [ lem x y ]-cong) (λ _ → P.proof-irrelevance _ _) y) (λ _ → P.proof-irrelevance _ _) x
+    plus-comm = elim (Mod₀ n) _ (λ x → elim (Mod₀ n) _ (λ y → [ lem x y ]-cong)
+                     (λ _ → P.proof-irrelevance _ _))
+                     (λ _ → extensionality (λ _ → P.proof-irrelevance _ _))
       where
       lem : ∀ x y → n ∣ ∣ (x + y) - (y + x) ∣
       lem x y = divides 0 (P.cong ∣_∣ (solve 2 (λ x y → (x :+ y) :- (y :+ x) := con 0#) P.refl x y))
+
+      open import Relation.Binary.PropositionalEquality using (Extensionality)
+      open import Level using (suc) renaming (zero to ℓ₀)
+      postulate
+        extensionality : ∀ {ℓ ℓ′} → Extensionality ℓ ℓ′
+
 
 open Dummy public renaming (plus to _+_; minus to _-_)

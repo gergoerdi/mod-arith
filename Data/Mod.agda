@@ -1,7 +1,8 @@
 module Data.Mod where
 
-module Dummy where
-  open import Data.Nat using (ℕ)
+open import Data.Nat using (ℕ)
+
+module Dummy {n : ℕ} where
   open import Data.Integer
   open import Data.Nat.Divisibility
   open import Quotient
@@ -20,8 +21,8 @@ module Dummy where
   open import Data.Mod.Lemmas
 
   private
-    Mod₀ : ℕ → Setoid Level.zero Level.zero
-    Mod₀ n = record
+    Mod₀ : Setoid Level.zero Level.zero
+    Mod₀ = record
       { Carrier = ℤ
       ; _≈_ = _∼_
       ; isEquivalence = isEquivalence
@@ -49,62 +50,72 @@ module Dummy where
             }
 
 
-  Mod : ℕ → Set
-  Mod n = Quotient (Mod₀ n)
+  Mod : Set
+  Mod = Quotient Mod₀
 
-  open import Quotient.Op
+  import Quotient.Op
+  open Quotient.Op Mod₀
   open Integer.RingSolver
+  open import Algebra.FunctionProperties using (Op₁; Op₂)
 
-  plus : ∀ {n} → Mod n → Mod n → Mod n
-  plus {n} = lift₂ _+_ (λ {x} {y} {t} {u} → proof {x} {y} {t} {u})
+  plus₀ : LiftOp₂
+  plus₀ = _+_ , λ {x y t u} → proof x y t u
     where
     abstract
-      proof : ∀ {x y t u} → (n ∣ ∣ x - y ∣) → (n ∣ ∣ t - u ∣) → n ∣ ∣ (x + t) - (y + u) ∣
-      proof {x} {y} {t} {u} x∼y t∼u = P.subst ((_∣_ n) ∘ ∣_∣) (P.sym (eq x y t u)) (∣-abs-+ (x - y) (t - u) x∼y t∼u)
+      proof : ∀ x y t u → (n ∣ ∣ x - y ∣) → (n ∣ ∣ t - u ∣) → n ∣ ∣ (x + t) - (y + u) ∣
+      proof x y t u x∼y t∼u = P.subst ((_∣_ n) ∘ ∣_∣) (P.sym (eq x y t u)) (∣-abs-+ (x - y) (t - u) x∼y t∼u)
         where
         eq : ∀ a b c d → (a + c) - (b + d) ≡ (a - b) + (c - d)
         eq = solve 4 (λ a b c d → (a :+ c) :- (b :+ d) := (a :- b) :+ (c :- d)) P.refl
 
-  minus : ∀ {n} → Mod n → Mod n → Mod n
-  minus {n} = lift₂ _-_ (λ {x} {y} {t} {u} → proof {x} {y} {t} {u})
+  plus : Op₂ Mod
+  plus = lift₂ plus₀
+
+  minus₀ : LiftOp₂
+  minus₀ = _-_ , λ {x y t u} → proof x y t u
     where
     abstract
-      proof : ∀ {x y t u} → (n ∣ ∣ x - y ∣) → (n ∣ ∣ t - u ∣) → n ∣ ∣ (x - t) - (y - u) ∣
-      proof {x} {y} {t} {u} x∼y t∼u = P.subst ((_∣_ n) ∘ ∣_∣) (P.sym (eq x y t u)) (∣-abs‿- (x + - y) (t + - u) x∼y t∼u)
+      proof : ∀ x y t u → (n ∣ ∣ x - y ∣) → (n ∣ ∣ t - u ∣) → n ∣ ∣ (x - t) - (y - u) ∣
+      proof x y t u x∼y t∼u = P.subst ((_∣_ n) ∘ ∣_∣) (P.sym (eq x y t u)) (∣-abs‿- (x + - y) (t + - u) x∼y t∼u)
         where
         eq : ∀ a b c d → (a - c) - (b - d) ≡ (a - b) - (c - d)
         eq = solve 4 (λ a b c d → (a :- c) :- (b :- d) := (a :- b) :- (c :- d)) P.refl
 
+  minus : Op₂ Mod
+  minus = lift₂ minus₀
+
   -- Derived operations
-  _+1 : ∀ {n} → Mod n → Mod n
+  _+1 : Op₁ Mod
   _+1 x = x ⟨ plus ⟩ [ 1# ]
 
-  _-1 : ∀ {n} → Mod n → Mod n
+  _-1 : Op₁ Mod
   _-1 x = x ⟨ minus ⟩ [ 1# ]
 
-  +1-1 : ∀ {n} → (x : Mod n) → x +1 -1 ≡ x
-  +1-1 {n} = elim _ _ (λ x → [ proof x ]-cong) (λ x∼y → P.proof-irrelevance _ _)
+  +1-1 : (x : Mod) → x +1 -1 ≡ x
+  +1-1 = elim _ _ (λ x → [ proof x ]-cong) (λ x∼y → P.proof-irrelevance _ _)
     where
     abstract
       proof : ∀ x → n ∣ ∣ (x + (+ 1) - (+ 1)) - x ∣
       proof = divides 0 ∘ P.cong ∣_∣ ∘ solve 1 (λ x → x :+ con 1# :- con 1# :- x := con 0#) P.refl
 
-  module Properties {n : ℕ} where
+{-
+  module Properties where
     import Algebra.FunctionProperties as FunProp
-    open FunProp (_≡_ {A = Mod n})
+    open FunProp (_≡_ {A = Mod})
 
     plus-comm : Commutative plus
-    plus-comm = elim (Mod₀ n) _ (λ x → elim (Mod₀ n) _ (λ y → [ lem x y ]-cong)
-                     (λ _ → P.proof-irrelevance _ _))
-                     (λ _ → extensionality (λ _ → P.proof-irrelevance _ _))
+    plus-comm = lift-comm _+_ _ lem
       where
       lem : ∀ x y → n ∣ ∣ (x + y) - (y + x) ∣
       lem x y = divides 0 (P.cong ∣_∣ (solve 2 (λ x y → (x :+ y) :- (y :+ x) := con 0#) P.refl x y))
 
-      open import Relation.Binary.PropositionalEquality using (Extensionality)
-      open import Level using (suc) renaming (zero to ℓ₀)
-      postulate
-        extensionality : ∀ {ℓ ℓ′} → Extensionality ℓ ℓ′
-
-
+      abstract
+        proof : ∀ {x y t u} → (n ∣ ∣ x - y ∣) → (n ∣ ∣ t - u ∣) → n ∣ ∣ (x + t) - (y + u) ∣
+        proof {x} {y} {t} {u} x∼y t∼u = P.subst ((_∣_ n) ∘ ∣_∣) (P.sym (eq x y t u)) (∣-abs-+ (x - y) (t - u) x∼y t∼u)
+          where
+          eq : ∀ a b c d → (a + c) - (b + d) ≡ (a - b) + (c - d)
+          eq = solve 4 (λ a b c d → (a :+ c) :- (b :+ d) := (a :- b) :+ (c :- d)) P.refl
+-}
+{-
 open Dummy public renaming (plus to _+_; minus to _-_)
+-}

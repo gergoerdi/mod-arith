@@ -108,37 +108,30 @@ module Dummy {n : ℕ} where
 
     open import Algebra.Structures
 
-    isSemigroup : IsSemigroup _≡_ plus
-    isSemigroup = record
-      { isEquivalence = isEquivalence
-      ; assoc = plus-assoc
-      ; ∙-cong = cong₂ plus
-      }
-      where
-      open import Relation.Binary.PropositionalEquality
-
-      abstract
-        plus-assoc : Associative plus
-        plus-assoc = lift-assoc′ plus₀ ℤ-CR.+-assoc
-
-    isMonoid : IsMonoid _≡_ plus [ + 0 ]
-    isMonoid = record
+    isCommutativeMonoid : IsCommutativeMonoid _≡_ plus [ + 0 ]
+    isCommutativeMonoid = record
       { isSemigroup = isSemigroup
-      ; identity = plus-identityˡ , plus-identityʳ
+      ; identityˡ = plus-identityˡ
+      ; comm = plus-comm
       }
       where
-      open Setoid Mod₀
-
       abstract
+        isSemigroup : IsSemigroup _≡_ plus
+        isSemigroup = record
+          { isEquivalence = isEquivalence
+          ; assoc = lift-assoc′ plus₀ ℤ-CR.+-assoc
+          ; ∙-cong = cong₂ plus
+          }
+          where
+          open import Relation.Binary.PropositionalEquality
+
         plus-identityˡ : LeftIdentity [ + 0 ] plus
         plus-identityˡ = elim Mod₀ _ (λ x → [ reflexive (proj₁ ℤ-CR.+-identity x) ]-cong)
-                                   (λ _ → P.proof-irrelevance _ _)
-
-        plus-identityʳ : RightIdentity [ + 0 ] plus
-        plus-identityʳ = elim Mod₀ _ (λ x → [ reflexive (proj₂ ℤ-CR.+-identity x) ]-cong)
                                      (λ _ → P.proof-irrelevance _ _)
+          where
+          open Setoid Mod₀
 
-    plus-comm : Commutative plus
-    plus-comm = lift-comm′ plus₀ ℤ-CR.+-comm
+        plus-comm : Commutative plus
+        plus-comm = lift-comm′ plus₀ ℤ-CR.+-comm
 
 open Dummy public renaming (plus to _+_; minus to _-_)

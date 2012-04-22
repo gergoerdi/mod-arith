@@ -98,24 +98,14 @@ module Dummy {n : ℕ} where
       proof : ∀ x → n ∣ ∣ (x + (+ 1) - (+ 1)) - x ∣
       proof = divides 0 ∘ P.cong ∣_∣ ∘ solve 1 (λ x → x :+ con 1# :- con 1# :- x := con 0#) P.refl
 
-{-
   module Properties where
     import Algebra.FunctionProperties as FunProp
     open FunProp (_≡_ {A = Mod})
 
     plus-comm : Commutative plus
-    plus-comm = lift-comm _+_ _ lem
+    plus-comm = lift-comm plus₀ lem
       where
       lem : ∀ x y → n ∣ ∣ (x + y) - (y + x) ∣
       lem x y = divides 0 (P.cong ∣_∣ (solve 2 (λ x y → (x :+ y) :- (y :+ x) := con 0#) P.refl x y))
 
-      abstract
-        proof : ∀ {x y t u} → (n ∣ ∣ x - y ∣) → (n ∣ ∣ t - u ∣) → n ∣ ∣ (x + t) - (y + u) ∣
-        proof {x} {y} {t} {u} x∼y t∼u = P.subst ((_∣_ n) ∘ ∣_∣) (P.sym (eq x y t u)) (∣-abs-+ (x - y) (t - u) x∼y t∼u)
-          where
-          eq : ∀ a b c d → (a + c) - (b + d) ≡ (a - b) + (c - d)
-          eq = solve 4 (λ a b c d → (a :+ c) :- (b :+ d) := (a :- b) :+ (c :- d)) P.refl
--}
-{-
 open Dummy public renaming (plus to _+_; minus to _-_)
--}

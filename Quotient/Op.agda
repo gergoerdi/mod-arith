@@ -36,14 +36,13 @@ private
                               (elim _ _ (λ _ → [ prf x≈y refl ]-cong)
                               (λ _ → proof-irrelevance _ _)))
 
-{-
     import Algebra.FunctionProperties as FunProp
     open FunProp (_≡_ {A = Quotient A})
 
-    lift-comm : (_∙_ : Op₂ A₀) → (P : Sound₂ _∙_) → (prf : ∀ x y → x ∙ y ≈ y ∙ x) → Commutative (lift₂ _∙_ P)
-    lift-comm ∙ P prf = elim A _ (λ x → elim A _ (λ y → [ prf x y ]-cong)
-                             (λ _ → proof-irrelevance _ _))
-                             (λ _ → extensionality (λ _ → proof-irrelevance _ _))
--}
+    lift-comm : (op : LiftOp₂) → let _∙_ = proj₁ op in (∀ x y → x ∙ y ≈ y ∙ x) → Commutative (lift₂ op)
+    lift-comm (_ , _) prf = elim A _ (λ x → elim A _ (λ y → [ prf x y ]-cong)
+                                     (λ _ → proof-irrelevance _ _))
+                                     (λ _ → extensionality (λ _ → proof-irrelevance _ _))
+
 open Dummy public
 

@@ -106,12 +106,6 @@ module Dummy {n : ℕ} where
     private
       module ℤ-CR = CommutativeRing Integer.commutativeRing
 
-    plus-assoc : Associative plus
-    plus-assoc = lift-assoc′ plus₀ ℤ-CR.+-assoc
-
-    plus-comm : Commutative plus
-    plus-comm = lift-comm′ plus₀ ℤ-CR.+-comm
-
     open import Algebra.Structures
 
     isSemigroup : IsSemigroup _≡_ plus
@@ -122,5 +116,29 @@ module Dummy {n : ℕ} where
       }
       where
       open import Relation.Binary.PropositionalEquality
+
+      abstract
+        plus-assoc : Associative plus
+        plus-assoc = lift-assoc′ plus₀ ℤ-CR.+-assoc
+
+    isMonoid : IsMonoid _≡_ plus [ + 0 ]
+    isMonoid = record
+      { isSemigroup = isSemigroup
+      ; identity = plus-identityˡ , plus-identityʳ
+      }
+      where
+      open Setoid Mod₀
+
+      abstract
+        plus-identityˡ : LeftIdentity [ + 0 ] plus
+        plus-identityˡ = elim Mod₀ _ (λ x → [ reflexive (proj₁ ℤ-CR.+-identity x) ]-cong)
+                                   (λ _ → P.proof-irrelevance _ _)
+
+        plus-identityʳ : RightIdentity [ + 0 ] plus
+        plus-identityʳ = elim Mod₀ _ (λ x → [ reflexive (proj₂ ℤ-CR.+-identity x) ]-cong)
+                                     (λ _ → P.proof-irrelevance _ _)
+
+    plus-comm : Commutative plus
+    plus-comm = lift-comm′ plus₀ ℤ-CR.+-comm
 
 open Dummy public renaming (plus to _+_; minus to _-_)

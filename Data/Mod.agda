@@ -1,6 +1,6 @@
 module Data.Mod where
 
-open import Data.Nat using (ℕ)
+open import Data.Nat using (ℕ) renaming (_*_ to _ℕ*_)
 
 module Dummy {n : ℕ} where
   open import Data.Integer
@@ -84,6 +84,22 @@ module Dummy {n : ℕ} where
   minus : Op₂ Mod
   minus = lift₂ minus₀
 
+  mul₀ : LiftOp₂
+  mul₀ = _*_ , λ {x x′ y y′} → proof x x′ y y′
+    where
+    abstract
+      proof : ∀ x x′ y y′ → n ∣ ∣ x - x′ ∣ → n ∣ ∣ y - y′ ∣ → n ∣ ∣ x * y - x′ * y′ ∣
+      proof x x′ y y′ x∼x′ y∼y′ = P.subst (_∣_ n ∘ ∣_∣) (P.sym (eq x x′ y y′))
+                                  (∣-abs-+ (x * (y - y′)) ((x - x′) * y′)
+                                    (∣-abs-*ˡ x (y - y′) y∼y′)
+                                    (∣-abs-*ʳ (x - x′) y′ x∼x′))
+        where
+        eq : ∀ a b c d → a * c - b * d ≡ a * (c - d) + (a - b) * d
+        eq = solve 4 (λ a b c d → a :* c :- b :* d := a :* (c :- d) :+ (a :- b) :* d) P.refl
+
+  mul : Op₂ Mod
+  mul = lift₂ mul₀
+
   -- Derived operations
   _+1 : Op₁ Mod
   _+1 x = x ⟨ plus ⟩ [ 1# ]
@@ -108,8 +124,8 @@ module Dummy {n : ℕ} where
 
     open import Algebra.Structures
 
-    isCommutativeMonoid : IsCommutativeMonoid _≡_ plus [ + 0 ]
-    isCommutativeMonoid = record
+    plus-isCommutativeMonoid : IsCommutativeMonoid _≡_ plus [ + 0 ]
+    plus-isCommutativeMonoid = record
       { isSemigroup = isSemigroup
       ; identityˡ = plus-identityˡ
       ; comm = plus-comm
@@ -134,4 +150,4 @@ module Dummy {n : ℕ} where
         plus-comm : Commutative plus
         plus-comm = lift-comm′ plus₀ ℤ-CR.+-comm
 
-open Dummy public renaming (plus to _+_; minus to _-_)
+open Dummy public renaming (plus to _+_; minus to _-_; mul to _*_)

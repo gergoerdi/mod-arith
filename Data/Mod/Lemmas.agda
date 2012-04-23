@@ -1,8 +1,8 @@
 module Data.Mod.Lemmas where
 
-open import Data.Nat renaming (_+_ to _ℕ+_)
+open import Data.Nat renaming (_+_ to _ℕ+_; _*_ to _ℕ*_)
 open import Data.Nat.Properties
-open import Data.Integer hiding (_*_; _≤_) renaming (suc to ℤsuc; pred to ℤpred)
+open import Data.Integer hiding (_≤_) renaming (suc to ℤsuc; pred to ℤpred)
 open import Data.Nat.Divisibility
 open import Function using (_∘_)
 
@@ -60,17 +60,17 @@ abstract
   abs-⊖-comm (suc _) zero = refl
   abs-⊖-comm (suc x) (suc y) = abs-⊖-comm x y
 
-  ∸-*-distrib : {n : ℕ} → (p q : ℕ) → p * n ∸ q * n ≡ (p ∸ q) * n
+  ∸-*-distrib : {n : ℕ} → (p q : ℕ) → p ℕ* n ∸ q ℕ* n ≡ (p ∸ q) ℕ* n
   ∸-*-distrib zero zero = refl
-  ∸-*-distrib {n} zero (suc q) = 0∸n≡0 (n ℕ+ q * n)
+  ∸-*-distrib {n} zero (suc q) = 0∸n≡0 (n ℕ+ q ℕ* n)
   ∸-*-distrib (suc p) zero = refl
   ∸-*-distrib {n} (suc p) (suc q) =
     begin
-      (n ℕ+ p * n) ∸ (n ℕ+ q * n)
-    ≡⟨ [i+j]∸[i+k]≡j∸k n (p * n) (q * n) ⟩
-      p * n ∸ q * n
+      (n ℕ+ p ℕ* n) ∸ (n ℕ+ q ℕ* n)
+    ≡⟨ [i+j]∸[i+k]≡j∸k n (p ℕ* n) (q ℕ* n) ⟩
+      p ℕ* n ∸ q ℕ* n
     ≡⟨ ∸-*-distrib p q ⟩
-      (p ∸ q) * n
+      (p ∸ q) ℕ* n
     ∎
 
   abs-flip : (x y : ℤ) → ∣ x - y ∣ ≡ ∣ y - x ∣
@@ -139,22 +139,22 @@ abstract
     lem-x<y : (x<y : x < y) → n ∣ ∣ y ⊖ suc x ∣
     lem-x<y x<y = divides (r ∸ q) eq″
       where
-      eq″ : ∣ y ⊖ suc x ∣ ≡ (r ∸ q) * n
+      eq″ : ∣ y ⊖ suc x ∣ ≡ (r ∸ q) ℕ* n
       eq″ =
         begin
           ∣ y ⊖ suc x ∣
         ≡⟨ cong ∣_∣ (diff-x<y x<y) ⟩
           y ∸ suc x
         ≡⟨ cong₂ _∸_ eq′ eq ⟩
-          r * n ∸ q * n
+          r ℕ* n ∸ q ℕ* n
         ≡⟨ ∸-*-distrib r q ⟩
-          (r ∸ q) * n
+          (r ∸ q) ℕ* n
         ∎
 
     lem-x≥y : (x≥y : x ≥ y) → n ∣ ∣ y ⊖ suc x ∣
     lem-x≥y x≥y = divides (q ∸ r) eq″
       where
-      eq″ : ∣ y ⊖ suc x ∣ ≡ (q ∸ r) * n
+      eq″ : ∣ y ⊖ suc x ∣ ≡ (q ∸ r) ℕ* n
       eq″ =
         begin
           ∣ y ⊖ suc x ∣
@@ -163,9 +163,9 @@ abstract
         ≡⟨ suc-∸ x≥y ⟩
           suc x ∸ y
         ≡⟨ cong₂ _∸_ eq eq′ ⟩
-          q * n ∸ r * n
+          q ℕ* n ∸ r ℕ* n
         ≡⟨ ∸-*-distrib q r ⟩
-          (q ∸ r) * n
+          (q ∸ r) ℕ* n
         ∎
 
     dispatch : n ∣ ∣ y ⊖ suc x ∣
@@ -178,18 +178,18 @@ abstract
   ∣-abs-+ : ∀ {n : ℕ} → (x y : ℤ) → n ∣ ∣ x ∣ → n ∣ ∣ y ∣ → n ∣ ∣ x + y ∣
   ∣-abs-+ {n} (+ x) (+ y) (divides q eq) (divides r eq′) = divides (q ℕ+ r) lem
     where
-    lem : x ℕ+ y ≡ (q ℕ+ r) * n
+    lem : x ℕ+ y ≡ (q ℕ+ r) ℕ* n
     lem =
       begin
         x ℕ+ y
       ≡⟨ cong₂ _ℕ+_ eq eq′ ⟩
-        q * n ℕ+ r * n
+        q ℕ* n ℕ+ r ℕ* n
       ≡⟨ sym (proj₂ ℕ-CS.distrib n q r) ⟩
-        (q ℕ+ r) * n
+        (q ℕ+ r) ℕ* n
       ∎
   ∣-abs-+ {n} -[1+ x ] -[1+ y ] (divides q eq) (divides r eq′) = divides (q ℕ+ r) lem
     where
-    lem : suc (suc (x ℕ+ y)) ≡ (q ℕ+ r) * n
+    lem : suc (suc (x ℕ+ y)) ≡ (q ℕ+ r) ℕ* n
     lem =
       begin
         suc ((suc x) ℕ+ y)
@@ -198,9 +198,9 @@ abstract
       ≡⟨ ℕ-CS.+-comm (suc y) (suc x) ⟩
         suc x ℕ+ suc y
       ≡⟨ cong₂ _ℕ+_ eq eq′ ⟩
-        q * n ℕ+ r * n
+        q ℕ* n ℕ+ r ℕ* n
       ≡⟨ sym (proj₂ ℕ-CS.distrib n q r) ⟩
-        (q ℕ+ r) * n
+        (q ℕ+ r) ℕ* n
       ∎
   ∣-abs-+ {n} -[1+ x ] (+ y) d d′ = div-diff d d′
   ∣-abs-+ {n} (+ x) -[1+ y ] d d′ = div-diff d′ d
@@ -212,3 +212,50 @@ abstract
     abs-neg -[1+ _ ] = refl
     abs-neg (+ zero) = refl
     abs-neg (+ suc _) = refl
+
+  abs-* : ∀ x y → ∣ x * y ∣ ≡ ∣ x ∣ ℕ* ∣ y ∣
+  abs-* -[1+ zero ] -[1+ y ] = refl
+  abs-* -[1+ suc x ] -[1+ y ] = refl
+  abs-* -[1+ zero ] (+ zero) = refl
+  abs-* -[1+ zero ] (+ suc n) = refl
+  abs-* -[1+ suc x ] (+ zero) = abs-* -[1+ x ] (+ zero)
+  abs-* -[1+ suc x ] (+ suc n) = refl
+  abs-* (+ zero) y = refl
+  abs-* (+ suc x) -[1+ zero ] = refl
+  abs-* (+ suc x) -[1+ suc y ] = refl
+  abs-* (+ suc n) (+ zero) = abs-* (+ n) (+ zero)
+  abs-* (+ suc x) (+ suc y) = refl
+
+  ∣-abs-*ˡ : ∀ {n} x y → n ∣ ∣ y ∣ → n ∣ ∣ x * y ∣
+  ∣-abs-*ˡ {n} x y (divides q eq) = divides (∣ x ∣ ℕ* q) lem
+    where
+    lem : ∣ x * y ∣ ≡ ∣ x ∣ ℕ* q ℕ* n
+    lem =
+      begin
+        ∣ x * y ∣
+      ≡⟨ abs-* x y ⟩
+        ∣ x ∣ ℕ* ∣ y ∣
+      ≡⟨ cong (λ ξ → ∣ x ∣ ℕ* ξ) eq ⟩
+        ∣ x ∣ ℕ* (q ℕ* n)
+      ≡⟨ sym (ℕ-CS.*-assoc ∣ x ∣ q n) ⟩
+        ∣ x ∣ ℕ* q ℕ* n
+      ∎
+
+  ∣-abs-*ʳ : ∀ {n} x y → n ∣ ∣ x ∣ → n ∣ ∣ x * y ∣
+  ∣-abs-*ʳ {n} x y (divides q eq) = divides (q ℕ* ∣ y ∣) lem
+    where
+    lem : ∣ x * y ∣ ≡ q ℕ* ∣ y ∣ ℕ* n
+    lem =
+      begin
+        ∣ x * y ∣
+      ≡⟨ abs-* x y ⟩
+        ∣ x ∣ ℕ* ∣ y ∣
+      ≡⟨ cong (λ ξ → ξ ℕ* ∣ y ∣) eq ⟩
+        q ℕ* n ℕ* ∣ y ∣
+      ≡⟨ ℕ-CS.*-assoc q n ∣ y ∣ ⟩
+        q ℕ* (n ℕ* ∣ y ∣)
+      ≡⟨ cong (λ ξ → q ℕ* ξ) (ℕ-CS.*-comm n ∣ y ∣) ⟩
+        q ℕ* (∣ y ∣ ℕ* n)
+      ≡⟨ sym (ℕ-CS.*-assoc q ∣ y ∣ n) ⟩
+        q ℕ* ∣ y ∣ ℕ* n
+      ∎

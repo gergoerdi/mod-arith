@@ -150,4 +150,28 @@ module Dummy {n : ℕ} where
         plus-comm : Commutative plus
         plus-comm = lift-comm′ plus₀ ℤ-CR.+-comm
 
+    mul-isMonoid : IsMonoid _≡_ mul [ + 1 ]
+    mul-isMonoid = record
+      { isSemigroup = isSemigroup
+      ; identity = mul-identityˡ , mul-identityʳ
+      }
+      where
+      abstract
+        isSemigroup : IsSemigroup _≡_ mul
+        isSemigroup = record
+          { isEquivalence = isEquivalence
+          ; assoc = lift-assoc′ mul₀ ℤ-CR.*-assoc
+          ; ∙-cong = cong₂ mul
+          }
+          where
+          open import Relation.Binary.PropositionalEquality
+
+        mul-identityˡ : LeftIdentity [ + 1 ] mul
+        mul-identityˡ = elim Mod₀ _ (λ x → [ (reflexive (proj₁ ℤ-CR.*-identity x)) ]-cong) (λ _ → P.proof-irrelevance _ _)
+          where open Setoid Mod₀
+
+        mul-identityʳ : RightIdentity [ + 1 ] mul
+        mul-identityʳ = elim Mod₀ _ (λ x → [ reflexive (proj₂ ℤ-CR.*-identity x) ]-cong) (λ _ → P.proof-irrelevance _ _)
+          where open Setoid Mod₀
+
 open Dummy public renaming (plus to _+_; minus to _-_; mul to _*_)

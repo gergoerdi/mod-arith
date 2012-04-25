@@ -213,19 +213,6 @@ abstract
     abs-neg (+ zero) = refl
     abs-neg (+ suc _) = refl
 
-  abs-* : ∀ x y → ∣ x * y ∣ ≡ ∣ x ∣ ℕ* ∣ y ∣
-  abs-* -[1+ zero ] -[1+ y ] = refl
-  abs-* -[1+ suc x ] -[1+ y ] = refl
-  abs-* -[1+ zero ] (+ zero) = refl
-  abs-* -[1+ zero ] (+ suc n) = refl
-  abs-* -[1+ suc x ] (+ zero) = abs-* -[1+ x ] (+ zero)
-  abs-* -[1+ suc x ] (+ suc n) = refl
-  abs-* (+ zero) y = refl
-  abs-* (+ suc x) -[1+ zero ] = refl
-  abs-* (+ suc x) -[1+ suc y ] = refl
-  abs-* (+ suc n) (+ zero) = abs-* (+ n) (+ zero)
-  abs-* (+ suc x) (+ suc y) = refl
-
   ∣-abs-*ˡ : ∀ {n} x y → n ∣ ∣ y ∣ → n ∣ ∣ x * y ∣
   ∣-abs-*ˡ {n} x y (divides q eq) = divides (∣ x ∣ ℕ* q) lem
     where
@@ -233,7 +220,7 @@ abstract
     lem =
       begin
         ∣ x * y ∣
-      ≡⟨ abs-* x y ⟩
+      ≡⟨ Integer.abs-*-commute x y ⟩
         ∣ x ∣ ℕ* ∣ y ∣
       ≡⟨ cong (λ ξ → ∣ x ∣ ℕ* ξ) eq ⟩
         ∣ x ∣ ℕ* (q ℕ* n)
@@ -248,7 +235,7 @@ abstract
     lem =
       begin
         ∣ x * y ∣
-      ≡⟨ abs-* x y ⟩
+      ≡⟨ Integer.abs-*-commute x y ⟩
         ∣ x ∣ ℕ* ∣ y ∣
       ≡⟨ cong (λ ξ → ξ ℕ* ∣ y ∣) eq ⟩
         q ℕ* n ℕ* ∣ y ∣
@@ -258,4 +245,24 @@ abstract
         q ℕ* (∣ y ∣ ℕ* n)
       ≡⟨ sym (ℕ-CS.*-assoc q ∣ y ∣ n) ⟩
         q ℕ* ∣ y ∣ ℕ* n
+      ∎
+
+  open Integer.RingSolver
+
+  abs-neg : ∀ x → ∣ - x ∣ ≡ ∣ x ∣
+  abs-neg -[1+ x ] = refl
+  abs-neg (+ zero) = refl
+  abs-neg (+ suc x) = refl
+
+  ∣-abs-neg : ∀ {n} x y → n ∣ ∣ x - y ∣ → n ∣ ∣ (- x) - (- y) ∣
+  ∣-abs-neg {n} x y = subst (_∣_ n) lem
+    where
+    lem : ∣ x - y ∣ ≡ ∣ (- x) - (- y) ∣
+    lem =
+      begin
+        ∣ x - y ∣
+      ≡⟨ cong ∣_∣ (solve 2 (λ x y → x :- y := :- (:- x :- :- y)) refl x y) ⟩
+        ∣ - ((- x) - (- y)) ∣
+      ≡⟨ abs-neg ((- x) - (- y)) ⟩
+        ∣ (- x) - (- y) ∣
       ∎

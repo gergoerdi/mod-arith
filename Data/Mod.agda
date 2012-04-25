@@ -50,6 +50,9 @@ module Dummy {n : ℕ} where
 
     open import Algebra.FunctionProperties using (Op₁; Op₂)
 
+    Sound₁ : Op₁ Carrier → Set
+    Sound₁ f = f Preserves _∼_ ⟶ _∼_
+
     Sound₂ : Op₂ Carrier → Set
     Sound₂ ∙ = ∙ Preserves₂ _∼_ ⟶ _∼_ ⟶ _∼_
 
@@ -57,6 +60,9 @@ module Dummy {n : ℕ} where
 
   plus : Op₂ Carrier
   plus = _+_
+
+  neg : Op₁ Carrier
+  neg = -_
 
   minus : Op₂ Carrier
   minus = _-_
@@ -72,6 +78,9 @@ module Dummy {n : ℕ} where
       abstract
         eq : ∀ a b c d → (a + c) - (b + d) ≡ (a - b) + (c - d)
         eq = solve 4 (λ a b c d → (a :+ c) :- (b :+ d) := (a :- b) :+ (c :- d)) P.refl
+
+    neg-sound : Sound₁ neg
+    neg-sound {x} {x′} x∼x′ = ∣-abs-neg x x′ x∼x′
 
     minus-sound : Sound₂ minus
     minus-sound {x} {x′} {y} {y′} x∼x y∼y′ = P.subst (_∣_ n ∘ ∣_∣) (P.sym (eq x x′ y y′))
@@ -91,7 +100,6 @@ module Dummy {n : ℕ} where
        eq : ∀ a b c d → a * c - b * d ≡ a * (c - d) + (a - b) * d
        eq = solve 4 (λ a b c d → a :* c :- b :* d := a :* (c :- d) :+ (a :- b) :* d) P.refl
 
-
   module Properties where
     import Algebra.FunctionProperties as FunProp
     open FunProp (_∼_)
@@ -102,28 +110,43 @@ module Dummy {n : ℕ} where
 
     open import Algebra.Structures
 
-    plus-isCommutativeMonoid : IsCommutativeMonoid _∼_ plus (+ 0)
-    plus-isCommutativeMonoid = record
-      { isSemigroup = isSemigroup
-      ; identityˡ = plus-identityˡ
+    plus-isAbelianGroup : IsAbelianGroup _∼_ plus (+ 0) neg
+    plus-isAbelianGroup = record
+      { isGroup = record
+        { isMonoid = isMonoid
+        ; inverse = inverseˡ , inverseʳ
+        ; ⁻¹-cong = λ {x x′} x∼y → neg-sound {x} {x′} x∼y
+        }
       ; comm = plus-comm
       }
       where
       abstract
         module S = Setoid Mod
 
-        isSemigroup : IsSemigroup _∼_ plus
-        isSemigroup = record
-          { isEquivalence = S.isEquivalence
-          ; assoc = λ x y z → S.reflexive (ℤ-CR.+-assoc x y z)
-          ; ∙-cong = λ {x x′ y y′} x∼x′ y∼y′ → plus-sound {x} {x′} {y} {y′} x∼x′ y∼y′
-          }
+        inverseˡ : ∀ x → n ∣ ∣ - x + x + (+ 0) ∣
+        inverseˡ x = P.subst (_∣_ n) (P.cong ∣_∣ (solve 1 (λ ξ → (con (+ 0) := (:- ξ :+ ξ :+ con (+ 0)))) P.refl x)) (n ∣0)
+
+        inverseʳ : ∀ x → n ∣ ∣ x - x + (+ 0) ∣
+        inverseʳ x = P.subst (_∣_ n) (P.cong ∣_∣ (solve 1 (λ ξ → (con (+ 0) := (ξ :- ξ :+ con (+ 0)))) P.refl x)) (n ∣0)
 
         plus-identityˡ : LeftIdentity (+ 0) plus
         plus-identityˡ = λ x → S.reflexive (proj₁ ℤ-CR.+-identity x)
 
+        plus-identityʳ : RightIdentity (+ 0) plus
+        plus-identityʳ = λ x → S.reflexive (proj₂ ℤ-CR.+-identity x)
+
         plus-comm : Commutative plus
         plus-comm = λ x y → S.reflexive (ℤ-CR.+-comm x y)
+
+        isMonoid : IsMonoid _∼_ plus (+ 0)
+        isMonoid = record
+          { isSemigroup = record
+            { isEquivalence = isEquivalence
+            ; assoc = λ x y z → S.reflexive (ℤ-CR.+-assoc x y z)
+            ; ∙-cong = λ {x} {x′} {y} {y′} x∼x′ y∼y′ → plus-sound {x} {x′} {y} {y′} x∼x′ y∼y′
+            }
+          ; identity = plus-identityˡ , plus-identityʳ
+          }
 
     mul-isMonoid : IsMonoid _∼_ mul (+ 1)
     mul-isMonoid = record

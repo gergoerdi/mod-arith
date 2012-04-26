@@ -112,21 +112,17 @@ module Dummy {n : ℕ} where
 
     plus-isAbelianGroup : IsAbelianGroup _∼_ plus (+ 0) neg
     plus-isAbelianGroup = record
-      { isGroup = record
-        { isMonoid = isMonoid
-        ; inverse = inverseˡ , inverseʳ
-        ; ⁻¹-cong = λ {x x′} x∼y → neg-sound {x} {x′} x∼y
-        }
+      { isGroup = isGroup
       ; comm = plus-comm
       }
       where
       abstract
         module S = Setoid Mod
 
-        inverseˡ : ∀ x → n ∣ ∣ - x + x + (+ 0) ∣
+        inverseˡ : LeftInverse (+ 0) neg plus
         inverseˡ x = P.subst (_∣_ n) (P.cong ∣_∣ (solve 1 (λ ξ → (con (+ 0) := (:- ξ :+ ξ :+ con (+ 0)))) P.refl x)) (n ∣0)
 
-        inverseʳ : ∀ x → n ∣ ∣ x - x + (+ 0) ∣
+        inverseʳ : RightInverse (+ 0) neg plus
         inverseʳ x = P.subst (_∣_ n) (P.cong ∣_∣ (solve 1 (λ ξ → (con (+ 0) := (ξ :- ξ :+ con (+ 0)))) P.refl x)) (n ∣0)
 
         plus-identityˡ : LeftIdentity (+ 0) plus
@@ -146,6 +142,13 @@ module Dummy {n : ℕ} where
             ; ∙-cong = λ {x} {x′} {y} {y′} x∼x′ y∼y′ → plus-sound {x} {x′} {y} {y′} x∼x′ y∼y′
             }
           ; identity = plus-identityˡ , plus-identityʳ
+          }
+
+        isGroup : IsGroup _∼_ plus (+ 0) neg
+        isGroup = record
+          { isMonoid = isMonoid
+          ; inverse = inverseˡ , inverseʳ
+          ; ⁻¹-cong = λ {x x′} x∼y → neg-sound {x} {x′} x∼y
           }
 
     mul-isMonoid : IsMonoid _∼_ mul (+ 1)

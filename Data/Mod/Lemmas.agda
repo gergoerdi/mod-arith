@@ -4,7 +4,7 @@ open import Data.Nat renaming (_+_ to _ℕ+_; _*_ to _ℕ*_)
 open import Data.Nat.Properties
 open import Data.Integer hiding (_≤_) renaming (suc to ℤsuc; pred to ℤpred)
 open import Data.Nat.Divisibility
-open import Function using (_∘_)
+open import Function using (_∘_; _⟨_⟩_)
 
 open import Relation.Binary
 
@@ -266,3 +266,43 @@ abstract
       ≡⟨ abs-neg ((- x) - (- y)) ⟩
         ∣ (- x) - (- y) ∣
       ∎
+
+  open import Data.Nat.Coprimality hiding (sym)
+  open import Data.Empty
+  open import Data.Fin hiding (_<_; _≤_; suc)
+  open import Data.Fin.Props
+
+  prime⇒coprime : ∀ n → Prime n → ∀ x → (suc x) < n → Coprime n (suc x)
+  prime⇒coprime zero () x x<n {i} (i∣n , i∣x)
+  prime⇒coprime (suc zero) () x x<n {i} (i∣n , i∣x)
+  prime⇒coprime (suc (suc n)) p x x<n {zero} (divides q eq , i∣x) = ⊥-elim bot
+    where
+    contradiction : suc (suc n) ≡ 0
+    contradiction =
+      begin
+        suc (suc n)
+      ≡⟨ eq ⟩
+        q ℕ* 0
+      ≡⟨ proj₂ ℕ-CS.zero q ⟩
+        0
+      ∎
+
+    bot : ⊥
+    bot with contradiction
+    bot | ()
+  prime⇒coprime (suc (suc n)) p x x<n {suc zero} (i∣n , i∣x) = refl
+  prime⇒coprime (suc (suc n)) p x x<n {suc (suc i)} (i∣n , i∣x) = ⊥-elim (p (proj₁ fin) (proj₂ fin))
+    where
+    i≤x : suc (suc i) ≤ suc x
+    i≤x = ∣⇒≤ i∣x
+
+    ssi<ssn : suc (suc i) < suc (suc n)
+    ssi<ssn = s≤s i≤x ⟨ trans ⟩ x<n
+      where
+      open DecTotalOrder Data.Nat.decTotalOrder
+
+    i<n : i < n
+    i<n = ≤-pred (≤-pred ssi<ssn)
+
+    fin : ∃ λ (k : Fin n) → suc (suc (toℕ k)) ∣ suc (suc n)
+    fin = fromℕ≤ i<n , subst (λ ξ → ξ ∣ suc (suc n)) (sym (cong (suc ∘ suc) (toℕ-fromℕ≤ i<n))) i∣n

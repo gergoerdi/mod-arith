@@ -247,8 +247,6 @@ abstract
         q ℕ* ∣ y ∣ ℕ* n
       ∎
 
-  open Integer.RingSolver
-
   abs-neg : ∀ x → ∣ - x ∣ ≡ ∣ x ∣
   abs-neg -[1+ x ] = refl
   abs-neg (+ zero) = refl
@@ -257,6 +255,8 @@ abstract
   ∣-abs-neg : ∀ {n} x y → n ∣ ∣ x - y ∣ → n ∣ ∣ (- x) - (- y) ∣
   ∣-abs-neg {n} x y = subst (_∣_ n) lem
     where
+    open Integer.RingSolver
+
     lem : ∣ x - y ∣ ≡ ∣ (- x) - (- y) ∣
     lem =
       begin
@@ -268,8 +268,9 @@ abstract
       ∎
 
   open import Data.Nat.Coprimality hiding (sym)
+  open import Data.Nat.Primality
   open import Data.Empty
-  open import Data.Fin hiding (_<_; _≤_; suc)
+  open import Data.Fin using (Fin; toℕ; fromℕ≤; #_)
   open import Data.Fin.Props
 
   prime⇒coprime : ∀ n → Prime n → ∀ x → (suc x) < n → Coprime n (suc x)
@@ -306,3 +307,22 @@ abstract
 
     fin : ∃ λ (k : Fin n) → suc (suc (toℕ k)) ∣ suc (suc n)
     fin = fromℕ≤ i<n , subst (λ ξ → ξ ∣ suc (suc n)) (sym (cong (suc ∘ suc) (toℕ-fromℕ≤ i<n))) i∣n
+
+
+  open import Data.Nat.GCD
+  open import Data.Nat.DivMod
+
+  mod-suc : ∀ n x → suc (suc n) ∣ suc (x ℕ* (suc (suc n))) ℕ+ suc n
+  mod-suc n x = divides (suc x) eq
+    where
+    open Nat.SemiringSolver
+    eq : suc (x ℕ* suc (suc n)) ℕ+ suc n ≡ suc x ℕ* suc (suc n)
+    eq = solve 2 (λ a b → con 1 :+ a :* (con 1 :+ b) :+ b := (con 1 :+ a) :* (con 1 :+ b)) refl x (suc n)
+
+  ∣-inv : ∀ n x → Coprime (suc (suc n)) x → ∃ λ y → suc (suc n) ∣ (y ℕ* x) ℕ+ (suc n)
+  ∣-inv n x coprime with Bézout.identity (coprime-gcd coprime)
+  ∣-inv n x coprime | Bézout.+- α β eq = {!!} , {!!}
+  ∣-inv n x coprime | Bézout.-+ α β eq = β , lem
+    where
+    lem : suc (suc n) ∣ (β ℕ* x) ℕ+ (suc n)
+    lem = subst (λ ξ → suc (suc n) ∣ ξ ℕ+ suc n) eq (mod-suc n α)

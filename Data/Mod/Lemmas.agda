@@ -205,13 +205,13 @@ abstract
   ∣-abs-+ {n} -[1+ x ] (+ y) d d′ = div-diff d d′
   ∣-abs-+ {n} (+ x) -[1+ y ] d d′ = div-diff d′ d
 
+  abs-neg : ∀ x → ∣ - x ∣ ≡ ∣ x ∣
+  abs-neg -[1+ x ] = refl
+  abs-neg (+ zero) = refl
+  abs-neg (+ suc x) = refl
+
   ∣-abs‿- : ∀ {n : ℕ} → (x y : ℤ) → n ∣ ∣ x ∣ → n ∣ ∣ y ∣ → n ∣ ∣ x - y ∣
-  ∣-abs‿- {n} x y d d′  = ∣-abs-+ x (- y) d (subst (_∣_ n) (abs-neg y) d′)
-    where
-    abs-neg : ∀ x → ∣ x ∣ ≡ ∣ - x ∣
-    abs-neg -[1+ _ ] = refl
-    abs-neg (+ zero) = refl
-    abs-neg (+ suc _) = refl
+  ∣-abs‿- {n} x y d d′  = ∣-abs-+ x (- y) d (subst (_∣_ n) (sym (abs-neg y)) d′)
 
   ∣-abs-*ˡ : ∀ {n} x y → n ∣ ∣ y ∣ → n ∣ ∣ x * y ∣
   ∣-abs-*ˡ {n} x y (divides q eq) = divides (∣ x ∣ ℕ* q) lem
@@ -246,11 +246,6 @@ abstract
       ≡⟨ sym (ℕ-CS.*-assoc q ∣ y ∣ n) ⟩
         q ℕ* ∣ y ∣ ℕ* n
       ∎
-
-  abs-neg : ∀ x → ∣ - x ∣ ≡ ∣ x ∣
-  abs-neg -[1+ x ] = refl
-  abs-neg (+ zero) = refl
-  abs-neg (+ suc x) = refl
 
   ∣-abs-neg : ∀ {n} x y → n ∣ ∣ x - y ∣ → n ∣ ∣ (- x) - (- y) ∣
   ∣-abs-neg {n} x y = subst (_∣_ n) lem

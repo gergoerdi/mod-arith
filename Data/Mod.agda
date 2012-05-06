@@ -186,7 +186,8 @@ module Dummy {n : ℕ} where
         isRing = record
           { +-isAbelianGroup = plus-isAbelianGroup
           ; *-isMonoid = mul-isMonoid
-          ; distrib = distrib }
+          ; distrib = distrib
+          }
           where
 
           distribˡ : mul DistributesOverˡ plus

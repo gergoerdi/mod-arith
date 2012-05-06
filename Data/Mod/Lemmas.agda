@@ -318,7 +318,7 @@ abstract
     eq = solve 2 (λ a b → con 1 :+ a :* (con 1 :+ b) :+ b := (con 1 :+ a) :* (con 1 :+ b)) refl x (suc n)
 
   ∣-inv : ∀ n x → Coprime (suc (suc n)) x → ∃ λ y → suc (suc n) ∣ (y ℕ* x) ℕ+ (suc n)
-  ∣-inv n x coprime with Bézout.identity (coprime-gcd coprime)
+  ∣-inv n x coprime with coprime-Bézout coprime
   ∣-inv n x coprime | Bézout.-+ α β eq = β , lem
     where
     lem : suc (suc n) ∣ β ℕ* x ℕ+ suc n

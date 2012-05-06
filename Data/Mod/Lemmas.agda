@@ -278,7 +278,7 @@ abstract
   prime⇒coprime : ∀ n → Prime n → ∀ x → (suc x) < n → Coprime n (suc x)
   prime⇒coprime zero () x x<n {i} (i∣n , i∣x)
   prime⇒coprime (suc zero) () x x<n {i} (i∣n , i∣x)
-  prime⇒coprime (suc (suc n)) p x x<n {zero} (divides q eq , i∣x) = ⊥-elim bot
+  prime⇒coprime (suc (suc n)) p x x<n {zero} (divides q eq , i∣x) = ⊥-elim (i+1+j≢i 0 contradiction)
     where
     contradiction : suc (suc n) ≡ 0
     contradiction =
@@ -289,10 +289,6 @@ abstract
       ≡⟨ proj₂ ℕ-CS.zero q ⟩
         0
       ∎
-
-    bot : ⊥
-    bot with contradiction
-    bot | ()
   prime⇒coprime (suc (suc n)) p x x<n {suc zero} (i∣n , i∣x) = refl
   prime⇒coprime (suc (suc n)) p x x<n {suc (suc i)} (i∣n , i∣x) = ⊥-elim (p (proj₁ fin) (proj₂ fin))
     where
@@ -356,9 +352,31 @@ abstract
           α ℕ* suc n ℕ* suc (suc n)
         ∎
 
+  *-shift : ∀ n x y → (+ y) * (+ x) - (+ 1) ≡ + (y ℕ* x ℕ+ n) - (+ suc n)
+  *-shift n x y =
+    begin
+      (+ y) * (+ x) - (+ 1)
+    ≡⟨ cong (λ ξ → ξ - (+ 1)) (y +-*-+ x) ⟩
+      + (y ℕ* x) - (+ 1)
+    ≡⟨ cong (λ ξ → + (y ℕ* x) + ξ) (lem n) ⟩
+      + (y ℕ* x) + ((+ n) - (+ suc n))
+    ≡⟨ sym (ℤ-CR.+-assoc (+ (y ℕ* x)) (+ n) -[1+ n ]) ⟩
+      + (y ℕ* x) + (+ n) - (+ suc n)
+    ≡⟨ refl ⟩
+      + (y ℕ* x ℕ+ n) - (+ suc n)
+    ∎
+    where
+    lem : ∀ a → - (+ 1) ≡ (+ a) - (+ suc a)
+    lem zero = refl
+    lem (suc a) = lem a
+
+  ⊖-cancel : ∀ x y → x ℕ+ y ⊖ x ≡ + y
+  ⊖-cancel zero y = refl
+  ⊖-cancel (suc x) y = ⊖-cancel x y
+
   ∣-abs-inv : ∀ n x → Coprime (suc (suc n)) ∣ x ∣ → ∃ λ y → suc (suc n) ∣ ∣ y * x - (+ 1) ∣
   ∣-abs-inv n (+ x) coprime with ∣-inv n x coprime
-  ∣-abs-inv n (+ x) coprime | y , divides zero eq = ⊥-elim bot
+  ∣-abs-inv n (+ x) coprime | y , divides zero eq = ⊥-elim (i+1+j≢i 0 contradiction)
     where
     contradiction : suc (y ℕ* x ℕ+ n) ≡ zero
     contradiction =
@@ -371,66 +389,53 @@ abstract
       ≡⟨ eq ⟩
         0
       ∎
-
-    bot : ⊥
-    bot with contradiction
-    bot | ()
   ∣-abs-inv n (+ x) coprime | y , divides (suc q) eq = + y , divides q eq′
     where
-    lem₁ : ∀ a → - (+ 1) ≡ (+ a) - (+ suc a)
-    lem₁ zero = refl
-    lem₁ (suc a) = lem₁ a
-
-    lem₂ : ∀ a b → (+ suc a) * b - b ≡ (+ a) * b
-    lem₂ a b =
-      begin
-        (+ suc a) * b - b
-      ≡⟨ cong (λ ξ → ξ - b) (1+a*b a b) ⟩
-        b + (+ a) * b - b
-      ≡⟨ solve 2 (λ a b → b :+ a :* b :- b := a :* b) refl (+ a) b ⟩
-        (+ a) * b
-      ∎
-      where
-      1+a*b : ∀ a b → (+ suc a) * b ≡ b + (+ a) * b
-      1+a*b zero b =
-        begin
-          (+ 1) * b
-        ≡⟨ proj₁ ℤ-CR.*-identity b ⟩
-          b
-        ≡⟨ sym (proj₂ ℤ-CR.+-identity b) ⟩
-          b + (+ 0)
-        ≡⟨ refl ⟩
-          b + (+ 0) * b
-        ∎
-      1+a*b (suc a) -[1+ zero ] = refl
-      1+a*b (suc a) -[1+ suc b ] = cong (-[1+_] ∘ suc) (flip-suc b (suc (b ℕ+ a ℕ* suc (suc b))))
-      1+a*b (suc a) (+ zero) = 1+a*b a (+ zero)
-      1+a*b (suc a) (+ suc b) = refl
-
-      open Integer.RingSolver
-
-
-
     eq′ : ∣ (+ y) * (+ x) - (+ 1) ∣ ≡ q ℕ* suc (suc n)
     eq′ =
       begin
         ∣ (+ y) * (+ x) - (+ 1) ∣
-      ≡⟨ cong (λ ξ → ∣ ξ - (+ 1) ∣) (y +-*-+ x) ⟩
-        ∣ + (y ℕ* x) - (+ 1) ∣
-      ≡⟨ cong (λ ξ → ∣ + (y ℕ* x) + ξ ∣) (lem₁ n) ⟩
-        ∣ + (y ℕ* x) + ((+ suc n) - (+ suc (suc n))) ∣
-      ≡⟨ cong ∣_∣ (sym (ℤ-CR.+-assoc (+ (y ℕ* x)) (+ suc n) -[1+ suc n ])) ⟩
-        ∣ + (y ℕ* x) + (+ suc n) - (+ suc (suc n)) ∣
-      ≡⟨ refl ⟩
-        ∣ + (y ℕ* x ℕ+ (suc n)) - (+ suc (suc n)) ∣
+      ≡⟨ cong ∣_∣ (*-shift (suc n) x y) ⟩
+        ∣ (y ℕ* x ℕ+ (suc n)) ⊖ suc (suc n) ∣
       ≡⟨ cong (λ ξ → ∣ + ξ - (+ suc (suc n)) ∣) eq ⟩
-        ∣ (+ suc q) * (+ suc (suc n)) - (+ suc (suc n)) ∣
-      ≡⟨ cong ∣_∣ (lem₂ q (+ suc (suc n))) ⟩
-        ∣ + q * (+ suc (suc n)) ∣
-      ≡⟨ cong ∣_∣ (q +-*-+ suc (suc n)) ⟩
+        ∣ suc (suc n) ℕ+ q ℕ* suc (suc n) ⊖ suc (suc n) ∣
+      ≡⟨ cong ∣_∣ (⊖-cancel n (q ℕ* suc (suc n))) ⟩
         ∣ + (q ℕ* suc (suc n)) ∣
       ≡⟨ refl ⟩
         q ℕ* suc (suc n)
       ∎
 
-  ∣-abs-inv n -[1+ x ] coprime = {!!}
+  ∣-abs-inv n -[1+ x ] coprime with ∣-inv n (suc x) coprime
+  ∣-abs-inv n -[1+ x ] coprime | y , divides zero eq = ⊥-elim (i+1+j≢i 0 contradiction)
+    where
+    contradiction : suc n ℕ+ y ℕ* suc x ≡ 0
+    contradiction =
+      begin
+        suc n ℕ+ y ℕ* suc x
+      ≡⟨ ℕ-CS.+-comm (suc n) (y ℕ* suc x) ⟩
+        y ℕ* suc x ℕ+ suc n
+      ≡⟨ eq ⟩
+        0
+      ∎
+  ∣-abs-inv n -[1+ x ] coprime | y , divides (suc q) eq = - (+ y) , divides q eq′
+    where
+    lem : ∀ x y → - (+ y) * -[1+ x ] ≡ (+ y) * (+ suc x)
+    lem x zero = refl
+    lem x (suc y) = refl
+
+    eq′ : ∣ - (+ y) * -[1+ x ] - (+ 1) ∣ ≡ q ℕ* suc (suc n)
+    eq′ =
+      begin
+        ∣ - (+ y) * -[1+ x ] - (+ 1) ∣
+      ≡⟨ cong (λ ξ → ∣ ξ - + 1 ∣) (lem x y) ⟩
+        ∣ (+ y) * (+ suc x) - (+ 1) ∣
+      ≡⟨ cong ∣_∣ (*-shift (suc n) (suc x) y) ⟩
+        ∣ y ℕ* suc x ℕ+ suc n ⊖ suc (suc n) ∣
+      ≡⟨ cong (λ ξ → ∣ ξ ⊖ suc (suc n) ∣) eq ⟩
+        ∣ n ℕ+ q ℕ* suc (suc n) ⊖ n ∣
+      ≡⟨ cong ∣_∣ (⊖-cancel n (q ℕ* suc (suc n))) ⟩
+        ∣ + (q ℕ* suc (suc n)) ∣
+      ≡⟨ refl ⟩
+        q ℕ* suc (suc n)
+      ∎
+

@@ -173,4 +173,32 @@ module Dummy {n : ℕ} where
         mul-identityʳ : RightIdentity (+ 1) mul
         mul-identityʳ = λ x → S.reflexive (proj₂ ℤ-CR.*-identity x)
 
+    isCommutativeRing : IsCommutativeRing _∼_ plus mul neg (+ 0) (+ 1)
+    isCommutativeRing = record
+      { isRing = isRing
+      ; *-comm = mul-comm
+      }
+      where
+      abstract
+        module S = Setoid Mod
+
+        isRing : IsRing _∼_ plus mul neg (+ 0) (+ 1)
+        isRing = record
+          { +-isAbelianGroup = plus-isAbelianGroup
+          ; *-isMonoid = mul-isMonoid
+          ; distrib = distrib }
+          where
+
+          distribˡ : mul DistributesOverˡ plus
+          distribˡ = λ x y z → S.reflexive (proj₁ ℤ-CR.distrib x y z)
+
+          distribʳ : mul DistributesOverʳ plus
+          distribʳ = λ x y z → S.reflexive (proj₂ ℤ-CR.distrib x y z)
+
+          distrib : mul DistributesOver plus
+          distrib = distribˡ , distribʳ
+
+        mul-comm : Commutative mul
+        mul-comm = λ x y → S.reflexive (ℤ-CR.*-comm x y)
+
 open Dummy public renaming (plus to _+_; minus to _-_; mul to _*_)

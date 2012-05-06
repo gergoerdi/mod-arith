@@ -276,9 +276,9 @@ abstract
   open import Data.Fin.Props
 
   prime⇒coprime : ∀ n → Prime n → ∀ x → (suc x) < n → Coprime n (suc x)
-  prime⇒coprime zero () x x<n {i} (i∣n , i∣x)
-  prime⇒coprime (suc zero) () x x<n {i} (i∣n , i∣x)
-  prime⇒coprime (suc (suc n)) p x x<n {zero} (divides q eq , i∣x) = ⊥-elim (i+1+j≢i 0 contradiction)
+  prime⇒coprime 0 () _ _ _
+  prime⇒coprime 1 () _ _ _
+  prime⇒coprime (suc (suc n)) p _ _ {0} (divides q eq , _) = ⊥-elim (i+1+j≢i 0 contradiction)
     where
     contradiction : suc (suc n) ≡ 0
     contradiction =
@@ -289,22 +289,22 @@ abstract
       ≡⟨ proj₂ ℕ-CS.zero q ⟩
         0
       ∎
-  prime⇒coprime (suc (suc n)) p x x<n {suc zero} (i∣n , i∣x) = refl
-  prime⇒coprime (suc (suc n)) p x x<n {suc (suc i)} (i∣n , i∣x) = ⊥-elim (p (proj₁ fin) (proj₂ fin))
+  prime⇒coprime (suc (suc n)) p _ _ {1} _ = refl
+  prime⇒coprime (suc (suc n)) p x x+1<n+2 {suc (suc i)} (i+2∣n+2 , i+2∣x+1) = ⊥-elim (p (proj₁ fin) (proj₂ fin))
     where
-    i≤x : suc (suc i) ≤ suc x
-    i≤x = ∣⇒≤ i∣x
+    i+2≤x+1 : suc (suc i) ≤ suc x
+    i+2≤x+1 = ∣⇒≤ i+2∣x+1
 
-    ssi<ssn : suc (suc i) < suc (suc n)
-    ssi<ssn = s≤s i≤x ⟨ trans ⟩ x<n
+    i+2<n+2 : suc (suc i) < suc (suc n)
+    i+2<n+2 = s≤s i+2≤x+1 ⟨ trans ⟩ x+1<n+2
       where
-      open DecTotalOrder Data.Nat.decTotalOrder
+      open DecTotalOrder Data.Nat.decTotalOrder using (trans)
 
     i<n : i < n
-    i<n = ≤-pred (≤-pred ssi<ssn)
+    i<n = (≤-pred ∘ ≤-pred) i+2<n+2
 
     fin : ∃ λ (k : Fin n) → suc (suc (toℕ k)) ∣ suc (suc n)
-    fin = fromℕ≤ i<n , subst (λ ξ → ξ ∣ suc (suc n)) (sym (cong (suc ∘ suc) (toℕ-fromℕ≤ i<n))) i∣n
+    fin = fromℕ≤ i<n , subst (λ ξ → ξ ∣ suc (suc n)) (sym (cong (suc ∘ suc) (toℕ-fromℕ≤ i<n))) i+2∣n+2
 
 
   open import Data.Nat.GCD

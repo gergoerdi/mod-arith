@@ -3,6 +3,7 @@ module Data.Mod.Lemmas where
 open import Data.Nat renaming (_+_ to _ℕ+_; _*_ to _ℕ*_)
 open import Data.Nat.Properties
 open import Data.Integer hiding (_≤_) renaming (suc to ℤsuc; pred to ℤpred)
+open import Data.Integer.Properties
 open import Data.Nat.Divisibility
 open import Function using (_∘_; _⟨_⟩_)
 
@@ -12,11 +13,12 @@ open import Algebra
 import Data.Nat.Properties as Nat
 private
   module ℕ-CS = CommutativeSemiring Nat.commutativeSemiring
-import Data.Integer.Properties as Integer
-private
-  module ℤ-CR = CommutativeRing Integer.commutativeRing
 private
   module ℕ-Ord = StrictTotalOrder Nat.strictTotalOrder
+import Data.Integer.Properties as Integer
+private
+  module ℤ-CR = CommutativeRing Data.Integer.Properties.commutativeRing
+
 open import Data.Product
 
 open import Relation.Binary.PropositionalEquality as PropEq using (_≡_; refl; sym; cong; cong₂; subst)
@@ -262,6 +264,11 @@ abstract
         ∣ (- x) - (- y) ∣
       ∎
 
+  _+-*-+_ : ∀ x y → (+ x) * (+ y) ≡ + (x ℕ* y)
+  zero +-*-+ y = refl
+  suc x +-*-+ zero = x +-*-+ zero
+  suc x +-*-+ suc y = refl
+
   open import Data.Nat.Coprimality hiding (sym)
   open import Data.Nat.Primality
   open import Data.Empty
@@ -348,3 +355,82 @@ abstract
         ≡⟨ sym (ℕ-CS.*-assoc α (suc n) (suc (suc n))) ⟩
           α ℕ* suc n ℕ* suc (suc n)
         ∎
+
+  ∣-abs-inv : ∀ n x → Coprime (suc (suc n)) ∣ x ∣ → ∃ λ y → suc (suc n) ∣ ∣ y * x - (+ 1) ∣
+  ∣-abs-inv n (+ x) coprime with ∣-inv n x coprime
+  ∣-abs-inv n (+ x) coprime | y , divides zero eq = ⊥-elim bot
+    where
+    contradiction : suc (y ℕ* x ℕ+ n) ≡ zero
+    contradiction =
+      begin
+        suc (y ℕ* x ℕ+ n)
+      ≡⟨ cong suc (sym (ℕ-CS.+-comm n (y ℕ* x))) ⟩
+        suc (n ℕ+ y ℕ* x)
+      ≡⟨ ℕ-CS.+-comm (suc n) (y ℕ* x) ⟩
+        y ℕ* x ℕ+ suc n
+      ≡⟨ eq ⟩
+        0
+      ∎
+
+    bot : ⊥
+    bot with contradiction
+    bot | ()
+  ∣-abs-inv n (+ x) coprime | y , divides (suc q) eq = + y , divides q eq′
+    where
+    lem₁ : ∀ a → - (+ 1) ≡ (+ a) - (+ suc a)
+    lem₁ zero = refl
+    lem₁ (suc a) = lem₁ a
+
+    lem₂ : ∀ a b → (+ suc a) * b - b ≡ (+ a) * b
+    lem₂ a b =
+      begin
+        (+ suc a) * b - b
+      ≡⟨ cong (λ ξ → ξ - b) (1+a*b a b) ⟩
+        b + (+ a) * b - b
+      ≡⟨ solve 2 (λ a b → b :+ a :* b :- b := a :* b) refl (+ a) b ⟩
+        (+ a) * b
+      ∎
+      where
+      1+a*b : ∀ a b → (+ suc a) * b ≡ b + (+ a) * b
+      1+a*b zero b =
+        begin
+          (+ 1) * b
+        ≡⟨ proj₁ ℤ-CR.*-identity b ⟩
+          b
+        ≡⟨ sym (proj₂ ℤ-CR.+-identity b) ⟩
+          b + (+ 0)
+        ≡⟨ refl ⟩
+          b + (+ 0) * b
+        ∎
+      1+a*b (suc a) -[1+ zero ] = refl
+      1+a*b (suc a) -[1+ suc b ] = cong (-[1+_] ∘ suc) (flip-suc b (suc (b ℕ+ a ℕ* suc (suc b))))
+      1+a*b (suc a) (+ zero) = 1+a*b a (+ zero)
+      1+a*b (suc a) (+ suc b) = refl
+
+      open Integer.RingSolver
+
+
+
+    eq′ : ∣ (+ y) * (+ x) - (+ 1) ∣ ≡ q ℕ* suc (suc n)
+    eq′ =
+      begin
+        ∣ (+ y) * (+ x) - (+ 1) ∣
+      ≡⟨ cong (λ ξ → ∣ ξ - (+ 1) ∣) (y +-*-+ x) ⟩
+        ∣ + (y ℕ* x) - (+ 1) ∣
+      ≡⟨ cong (λ ξ → ∣ + (y ℕ* x) + ξ ∣) (lem₁ n) ⟩
+        ∣ + (y ℕ* x) + ((+ suc n) - (+ suc (suc n))) ∣
+      ≡⟨ cong ∣_∣ (sym (ℤ-CR.+-assoc (+ (y ℕ* x)) (+ suc n) -[1+ suc n ])) ⟩
+        ∣ + (y ℕ* x) + (+ suc n) - (+ suc (suc n)) ∣
+      ≡⟨ refl ⟩
+        ∣ + (y ℕ* x ℕ+ (suc n)) - (+ suc (suc n)) ∣
+      ≡⟨ cong (λ ξ → ∣ + ξ - (+ suc (suc n)) ∣) eq ⟩
+        ∣ (+ suc q) * (+ suc (suc n)) - (+ suc (suc n)) ∣
+      ≡⟨ cong ∣_∣ (lem₂ q (+ suc (suc n))) ⟩
+        ∣ + q * (+ suc (suc n)) ∣
+      ≡⟨ cong ∣_∣ (q +-*-+ suc (suc n)) ⟩
+        ∣ + (q ℕ* suc (suc n)) ∣
+      ≡⟨ refl ⟩
+        q ℕ* suc (suc n)
+      ∎
+
+  ∣-abs-inv n -[1+ x ] coprime = {!!}

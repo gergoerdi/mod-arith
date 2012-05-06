@@ -321,62 +321,35 @@ abstract
 
   ∣-inv : ∀ n x → Coprime (suc (suc n)) x → ∃ λ y → suc (suc n) ∣ (y ℕ* x) ℕ+ (suc n)
   ∣-inv n x coprime with Bézout.identity (coprime-gcd coprime)
-  ∣-inv n x coprime | Bézout.+- α β eq = pred (α ℕ* suc (suc n)) ℕ* β , lem
-    where
-    lem : suc (suc n) ∣ pred (α ℕ* suc (suc n)) ℕ* β ℕ* x ℕ+ suc n
-    lem = divides (pred (α ℕ* β ℕ* x)) eq′
-      where
-      ∸-+ : ∀ n m k → n ∸ m ≡ (k ℕ+ n) ∸ (k ℕ+ m)
-      ∸-+ n m zero = refl
-      ∸-+ n m (suc k) = ∸-+ n m k
-
-      dist-∸ : ∀ a b c → (a ∸ b) ℕ* c ≡ a ℕ* c ∸ b ℕ* c
-      dist-∸ a zero c = refl
-      dist-∸ zero (suc b) c = sym (0∸n (c ℕ+ b ℕ* c))
-        where
-        0∸n : ∀ n → 0 ∸ n ≡ 0
-        0∸n zero = refl
-        0∸n (suc _) = refl
-      dist-∸ (suc a) (suc b) c =
-        begin
-          (a ∸ b) ℕ* c
-        ≡⟨ dist-∸ a b c ⟩
-          a ℕ* c ∸ b ℕ* c
-        ≡⟨ ∸-+ (a ℕ* c) (b ℕ* c) c ⟩
-          (c ℕ+ a ℕ* c) ∸ (c ℕ+ b ℕ* c)
-        ∎
-
-      ∸-wrap : ∀ n m → n ≡ m ℕ+ n ∸ m
-      ∸-wrap n zero = refl
-      ∸-wrap n (suc m) = ∸-wrap n m
-
-      dist-pred : ∀ n m → pred n ℕ* m ≡ n ℕ* m ∸ m
-      dist-pred zero zero = refl
-      dist-pred zero (suc _) = refl
-      dist-pred (suc n) m =
-        begin
-          n ℕ* m
-        ≡⟨ ∸-wrap (n ℕ* m) m ⟩
-          m ℕ+ n ℕ* m ∸ m
-        ∎
-
-      eq′ : pred (α ℕ* suc (suc n)) ℕ* β ℕ* x ℕ+ suc n ≡
-              pred (α ℕ* β ℕ* x) ℕ* suc (suc n)
-      eq′ =
-        begin
-          pred (α ℕ* suc (suc n)) ℕ* β ℕ* x ℕ+ suc n
-        ≡⟨ cong (λ ξ → ξ ℕ* x ℕ+ suc n) (dist-pred (α ℕ* suc (suc n)) β)  ⟩
-          (α ℕ* suc (suc n) ℕ* β ∸ β) ℕ* x ℕ+ suc n
-        ≡⟨ cong (λ ξ → ξ ℕ+ suc n) (dist-∸ (α ℕ* suc (suc n) ℕ* β) β x) ⟩
-          α ℕ* suc (suc n) ℕ* β ℕ* x ∸ β ℕ* x ℕ+ suc n
-        ≡⟨ refl ⟩
-          suc (α ℕ* suc (suc n) ℕ* β ℕ* x) ∸ suc (β ℕ* x) ℕ+ suc n
-        ≡⟨ cong (λ ξ → suc (α ℕ* suc (suc n) ℕ* β ℕ* x) ∸ ξ ℕ+ suc n) eq ⟩
-          suc (α ℕ* suc (suc n) ℕ* β ℕ* x) ∸ α ℕ* suc (suc n) ℕ+ suc n
-        ≡⟨ {!!} ⟩
-          {!α ℕ* suc (suc n) ℕ* β ℕ* x ∸ β ℕ* x ℕ+ suc n!}
-        ∎
   ∣-inv n x coprime | Bézout.-+ α β eq = β , lem
     where
     lem : suc (suc n) ∣ β ℕ* x ℕ+ suc n
     lem = subst (λ ξ → suc (suc n) ∣ ξ ℕ+ suc n) eq (mod-suc n α)
+  ∣-inv n x coprime | Bézout.+- α β eq = β ℕ* suc n , lem
+    where
+    lem : suc (suc n) ∣ β ℕ* suc n ℕ* x ℕ+ suc n
+    lem = divides (α ℕ* suc n) eq′
+      where
+      eq′ : β ℕ* suc n ℕ* x ℕ+ suc n ≡ α ℕ* suc n ℕ* suc (suc n)
+      eq′ =
+        begin
+          β ℕ* suc n ℕ* x ℕ+ suc n
+        ≡⟨ cong (λ ξ → ξ ℕ+ suc n) (ℕ-CS.*-assoc β (suc n) x) ⟩
+          β ℕ* (suc n ℕ* x) ℕ+ suc n
+        ≡⟨ cong (λ ξ → ξ ℕ+ suc n) (sym (cong (_ℕ*_ β) (ℕ-CS.*-comm x (suc n)))) ⟩
+          β ℕ* (x ℕ* suc n) ℕ+ suc n
+        ≡⟨ cong (λ ξ → ξ ℕ+ suc n) (sym (ℕ-CS.*-assoc β x (suc n))) ⟩
+          β ℕ* x ℕ* suc n ℕ+ suc n
+        ≡⟨ ℕ-CS.+-comm (β ℕ* x ℕ* suc n) (suc n) ⟩
+          suc n ℕ+ β ℕ* x ℕ* suc n
+        ≡⟨ refl ⟩
+          suc (β ℕ* x) ℕ* suc n
+        ≡⟨ cong (λ ξ → ξ ℕ* suc n) eq ⟩
+          α ℕ* suc (suc n) ℕ* suc n
+        ≡⟨ ℕ-CS.*-assoc α (suc (suc n)) (suc n) ⟩
+          α ℕ* (suc (suc n) ℕ* suc n)
+        ≡⟨ sym (cong (λ ξ → α ℕ* ξ) (ℕ-CS.*-comm (suc n) (suc (suc n)))) ⟩
+          α ℕ* (suc n ℕ* suc (suc n))
+        ≡⟨ sym (ℕ-CS.*-assoc α (suc n) (suc (suc n))) ⟩
+          α ℕ* suc n ℕ* suc (suc n)
+        ∎

@@ -1,10 +1,11 @@
 module Data.Mod where
 
+open import Data.Integer
+
 private
   open import Data.Nat using (ℕ) renaming (_*_ to _ℕ*_)
 
   module Dummy (n : ℕ) where
-    open import Data.Integer
     open import Data.Nat.Divisibility
     open import Function using (_∘_; _⟨_⟩_)
     import Level
@@ -46,18 +47,8 @@ private
             ; trans = λ {x} {y} {z} → transitive {x} {y} {z}
             }
 
-    private
-      open Setoid Mod
-
-      open import Algebra.FunctionProperties using (Op₁; Op₂)
-
-      Sound₁ : Op₁ Carrier → Set
-      Sound₁ f = f Preserves _∼_ ⟶ _∼_
-
-      Sound₂ : Op₂ Carrier → Set
-      Sound₂ ∙ = ∙ Preserves₂ _∼_ ⟶ _∼_ ⟶ _∼_
-
-    open Integer.RingSolver
+    open import Algebra.FunctionProperties using (Op₁; Op₂)
+    open Setoid Mod
 
     plus : Op₂ Carrier
     plus = _+_
@@ -71,136 +62,166 @@ private
     mul : Op₂ Carrier
     mul = _*_
 
-    abstract
-      plus-sound : Sound₂ plus
-      plus-sound {x} {x′} {y} {y′} x∼x′ y∼y′ = P.subst (_∣_ n ∘ ∣_∣) (P.sym (eq x x′ y y′))
-                                                       (∣-abs-+ (x - x′) (y - y′) x∼x′ y∼y′)
-        where
-        abstract
-          eq : ∀ a b c d → (a + c) - (b + d) ≡ (a - b) + (c - d)
-          eq = solve 4 (λ a b c d → (a :+ c) :- (b :+ d) := (a :- b) :+ (c :- d)) P.refl
+    private
+      Sound₁ : Op₁ Carrier → Set
+      Sound₁ f = f Preserves _∼_ ⟶ _∼_
 
-      neg-sound : Sound₁ neg
-      neg-sound {x} {x′} x∼x′ = ∣-abs-neg x x′ x∼x′
+      Sound₂ : Op₂ Carrier → Set
+      Sound₂ ∙ = ∙ Preserves₂ _∼_ ⟶ _∼_ ⟶ _∼_
 
-      minus-sound : Sound₂ minus
-      minus-sound {x} {x′} {y} {y′} x∼x y∼y′ = P.subst (_∣_ n ∘ ∣_∣) (P.sym (eq x x′ y y′))
-                                                       (∣-abs‿- (x - x′) (y - y′) x∼x y∼y′)
-        where
-        abstract
-          eq : ∀ a b c d → (a - c) - (b - d) ≡ (a - b) - (c - d)
-          eq = solve 4 (λ a b c d → (a :- c) :- (b :- d) := (a :- b) :- (c :- d)) P.refl
+      abstract
+        open Integer.RingSolver
 
-      mul-sound : Sound₂ mul
-      mul-sound {x} {x′} {y} {y′} x∼x′ y∼y′ = P.subst (_∣_ n ∘ ∣_∣) (P.sym (eq x x′ y y′))
-                                                      (∣-abs-+ (x * (y - y′)) ((x - x′) * y′)
-                                                              (∣-abs-*ˡ x (y - y′) y∼y′)
-                                                              (∣-abs-*ʳ (x - x′) y′ x∼x′))
-        where
-        abstract
-         eq : ∀ a b c d → a * c - b * d ≡ a * (c - d) + (a - b) * d
-         eq = solve 4 (λ a b c d → a :* c :- b :* d := a :* (c :- d) :+ (a :- b) :* d) P.refl
+        plus-sound : Sound₂ plus
+        plus-sound {x} {x′} {y} {y′} x∼x′ y∼y′ = P.subst (_∣_ n ∘ ∣_∣) (P.sym (eq x x′ y y′))
+                                                         (∣-abs-+ (x - x′) (y - y′) x∼x′ y∼y′)
+          where
+          abstract
+            eq : ∀ a b c d → (a + c) - (b + d) ≡ (a - b) + (c - d)
+            eq = solve 4 (λ a b c d → (a :+ c) :- (b :+ d) := (a :- b) :+ (c :- d)) P.refl
+
+        neg-sound : Sound₁ neg
+        neg-sound {x} {x′} x∼x′ = ∣-abs-neg x x′ x∼x′
+
+        minus-sound : Sound₂ minus
+        minus-sound {x} {x′} {y} {y′} x∼x y∼y′ = P.subst (_∣_ n ∘ ∣_∣) (P.sym (eq x x′ y y′))
+                                                         (∣-abs‿- (x - x′) (y - y′) x∼x y∼y′)
+          where
+          abstract
+            eq : ∀ a b c d → (a - c) - (b - d) ≡ (a - b) - (c - d)
+            eq = solve 4 (λ a b c d → (a :- c) :- (b :- d) := (a :- b) :- (c :- d)) P.refl
+
+        mul-sound : Sound₂ mul
+        mul-sound {x} {x′} {y} {y′} x∼x′ y∼y′ = P.subst (_∣_ n ∘ ∣_∣) (P.sym (eq x x′ y y′))
+                                                        (∣-abs-+ (x * (y - y′)) ((x - x′) * y′)
+                                                                (∣-abs-*ˡ x (y - y′) y∼y′)
+                                                                (∣-abs-*ʳ (x - x′) y′ x∼x′))
+          where
+          abstract
+           eq : ∀ a b c d → a * c - b * d ≡ a * (c - d) + (a - b) * d
+           eq = solve 4 (λ a b c d → a :* c :- b :* d := a :* (c :- d) :+ (a :- b) :* d) P.refl
 
     module Properties where
-      import Algebra.FunctionProperties as FunProp
-      open FunProp (_∼_)
-
-      import Data.Integer.Properties as Integer
       private
-        module ℤ-CR = CommutativeRing Integer.commutativeRing
+        import Algebra.FunctionProperties as FunProp
+        open FunProp (_∼_)
 
-      open import Algebra.Structures
+        import Data.Integer.Properties as Integer
+        private
+          module ℤ-CR = CommutativeRing Integer.commutativeRing
 
-      plus-isAbelianGroup : IsAbelianGroup _∼_ plus (+ 0) neg
-      plus-isAbelianGroup = record
-        { isGroup = isGroup
-        ; comm = plus-comm
-        }
-        where
-        abstract
-          module S = Setoid Mod
+        open import Algebra.Structures
 
-          inverseˡ : LeftInverse (+ 0) neg plus
-          inverseˡ x = P.subst (_∣_ n) (P.cong ∣_∣ (solve 1 (λ ξ → (con (+ 0) := (:- ξ :+ ξ :+ con (+ 0)))) P.refl x)) (n ∣0)
+        plus-isAbelianGroup : IsAbelianGroup _∼_ plus (+ 0) neg
+        plus-isAbelianGroup = record
+          { isGroup = isGroup
+          ; comm = plus-comm
+          }
+          where
+          abstract
+            module S = Setoid Mod
 
-          inverseʳ : RightInverse (+ 0) neg plus
-          inverseʳ x = P.subst (_∣_ n) (P.cong ∣_∣ (solve 1 (λ ξ → (con (+ 0) := (ξ :- ξ :+ con (+ 0)))) P.refl x)) (n ∣0)
+            inverseˡ : LeftInverse (+ 0) neg plus
+            inverseˡ x = P.subst (_∣_ n) (P.cong ∣_∣ (solve 1 (λ ξ → (con (+ 0) := (:- ξ :+ ξ :+ con (+ 0)))) P.refl x)) (n ∣0)
 
-          plus-identityˡ : LeftIdentity (+ 0) plus
-          plus-identityˡ = λ x → S.reflexive (proj₁ ℤ-CR.+-identity x)
+            inverseʳ : RightInverse (+ 0) neg plus
+            inverseʳ x = P.subst (_∣_ n) (P.cong ∣_∣ (solve 1 (λ ξ → (con (+ 0) := (ξ :- ξ :+ con (+ 0)))) P.refl x)) (n ∣0)
 
-          plus-identityʳ : RightIdentity (+ 0) plus
-          plus-identityʳ = λ x → S.reflexive (proj₂ ℤ-CR.+-identity x)
+            plus-identityˡ : LeftIdentity (+ 0) plus
+            plus-identityˡ = λ x → S.reflexive (proj₁ ℤ-CR.+-identity x)
 
-          plus-comm : Commutative plus
-          plus-comm = λ x y → S.reflexive (ℤ-CR.+-comm x y)
+            plus-identityʳ : RightIdentity (+ 0) plus
+            plus-identityʳ = λ x → S.reflexive (proj₂ ℤ-CR.+-identity x)
 
-          isMonoid : IsMonoid _∼_ plus (+ 0)
-          isMonoid = record
-            { isSemigroup = record
-              { isEquivalence = isEquivalence
-              ; assoc = λ x y z → S.reflexive (ℤ-CR.+-assoc x y z)
-              ; ∙-cong = λ {x} {x′} {y} {y′} x∼x′ y∼y′ → plus-sound {x} {x′} {y} {y′} x∼x′ y∼y′
+            plus-comm : Commutative plus
+            plus-comm = λ x y → S.reflexive (ℤ-CR.+-comm x y)
+
+            isMonoid : IsMonoid _∼_ plus (+ 0)
+            isMonoid = record
+              { isSemigroup = record
+                { isEquivalence = isEquivalence
+                ; assoc = λ x y z → S.reflexive (ℤ-CR.+-assoc x y z)
+                ; ∙-cong = λ {x} {x′} {y} {y′} x∼x′ y∼y′ → plus-sound {x} {x′} {y} {y′} x∼x′ y∼y′
+                }
+              ; identity = plus-identityˡ , plus-identityʳ
               }
-            ; identity = plus-identityˡ , plus-identityʳ
-            }
 
-          isGroup : IsGroup _∼_ plus (+ 0) neg
-          isGroup = record
-            { isMonoid = isMonoid
-            ; inverse = inverseˡ , inverseʳ
-            ; ⁻¹-cong = λ {x x′} x∼y → neg-sound {x} {x′} x∼y
-            }
+            isGroup : IsGroup _∼_ plus (+ 0) neg
+            isGroup = record
+              { isMonoid = isMonoid
+              ; inverse = inverseˡ , inverseʳ
+              ; ⁻¹-cong = λ {x x′} x∼y → neg-sound {x} {x′} x∼y
+              }
 
-      mul-isMonoid : IsMonoid _∼_ mul (+ 1)
-      mul-isMonoid = record
-        { isSemigroup = isSemigroup
-        ; identity = mul-identityˡ , mul-identityʳ
+        mul-isMonoid : IsMonoid _∼_ mul (+ 1)
+        mul-isMonoid = record
+          { isSemigroup = isSemigroup
+          ; identity = mul-identityˡ , mul-identityʳ
+          }
+          where
+          abstract
+            module S = Setoid Mod
+
+            isSemigroup : IsSemigroup _∼_ mul
+            isSemigroup = record
+              { isEquivalence = S.isEquivalence
+              ; assoc = λ x y z → S.reflexive (ℤ-CR.*-assoc x y z)
+              ; ∙-cong = λ {x x′ y y′} x∼x′ y∼y′ → mul-sound {x} {x′} {y} {y′} x∼x′ y∼y′
+              }
+
+            mul-identityˡ : LeftIdentity (+ 1) mul
+            mul-identityˡ = λ x → S.reflexive (proj₁ ℤ-CR.*-identity x)
+
+            mul-identityʳ : RightIdentity (+ 1) mul
+            mul-identityʳ = λ x → S.reflexive (proj₂ ℤ-CR.*-identity x)
+
+        isCommutativeRing : IsCommutativeRing _∼_ plus mul neg (+ 0) (+ 1)
+        isCommutativeRing = record
+          { isRing = isRing
+          ; *-comm = mul-comm
+          }
+          where
+          abstract
+            module S = Setoid Mod
+
+            isRing : IsRing _∼_ plus mul neg (+ 0) (+ 1)
+            isRing = record
+              { +-isAbelianGroup = plus-isAbelianGroup
+              ; *-isMonoid = mul-isMonoid
+              ; distrib = distrib
+              }
+              where
+
+              distribˡ : mul DistributesOverˡ plus
+              distribˡ = λ x y z → S.reflexive (proj₁ ℤ-CR.distrib x y z)
+
+              distribʳ : mul DistributesOverʳ plus
+              distribʳ = λ x y z → S.reflexive (proj₂ ℤ-CR.distrib x y z)
+
+              distrib : mul DistributesOver plus
+              distrib = distribˡ , distribʳ
+
+            mul-comm : Commutative mul
+            mul-comm = λ x y → S.reflexive (ℤ-CR.*-comm x y)
+
+      commutativeRing : CommutativeRing _ _
+      commutativeRing = record
+        { Carrier           = ℤ
+        ; _≈_               = _∼_
+        ; _+_               = plus
+        ; _*_               = mul
+        ; -_                = neg
+        ; 0#                = + 0
+        ; 1#                = + 1
+        ; isCommutativeRing = isCommutativeRing
         }
-        where
-        abstract
-          module S = Setoid Mod
 
-          isSemigroup : IsSemigroup _∼_ mul
-          isSemigroup = record
-            { isEquivalence = S.isEquivalence
-            ; assoc = λ x y z → S.reflexive (ℤ-CR.*-assoc x y z)
-            ; ∙-cong = λ {x x′ y y′} x∼x′ y∼y′ → mul-sound {x} {x′} {y} {y′} x∼x′ y∼y′
-            }
+      import Algebra.RingSolver.Simple as Solver
+      import Algebra.RingSolver.AlmostCommutativeRing as ACR
+      module RingSolver = Solver (ACR.fromCommutativeRing commutativeRing)
 
-          mul-identityˡ : LeftIdentity (+ 1) mul
-          mul-identityˡ = λ x → S.reflexive (proj₁ ℤ-CR.*-identity x)
+open Dummy public using (module Properties)
 
-          mul-identityʳ : RightIdentity (+ 1) mul
-          mul-identityʳ = λ x → S.reflexive (proj₂ ℤ-CR.*-identity x)
+[_] : ℕ → ℤ
+[ n ] = + n
 
-      isCommutativeRing : IsCommutativeRing _∼_ plus mul neg (+ 0) (+ 1)
-      isCommutativeRing = record
-        { isRing = isRing
-        ; *-comm = mul-comm
-        }
-        where
-        abstract
-          module S = Setoid Mod
-
-          isRing : IsRing _∼_ plus mul neg (+ 0) (+ 1)
-          isRing = record
-            { +-isAbelianGroup = plus-isAbelianGroup
-            ; *-isMonoid = mul-isMonoid
-            ; distrib = distrib
-            }
-            where
-
-            distribˡ : mul DistributesOverˡ plus
-            distribˡ = λ x y z → S.reflexive (proj₁ ℤ-CR.distrib x y z)
-
-            distribʳ : mul DistributesOverʳ plus
-            distribʳ = λ x y z → S.reflexive (proj₂ ℤ-CR.distrib x y z)
-
-            distrib : mul DistributesOver plus
-            distrib = distribˡ , distribʳ
-
-          mul-comm : Commutative mul
-          mul-comm = λ x y → S.reflexive (ℤ-CR.*-comm x y)
-
-open Dummy public renaming (plus to _+_; minus to _-_; mul to _*_)

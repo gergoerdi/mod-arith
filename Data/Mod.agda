@@ -1,11 +1,116 @@
 module Data.Mod where
 
-open import Data.Integer
+open import Data.Integer using (ℤ)
 
 private
-  open import Data.Nat using (ℕ) renaming (_*_ to _ℕ*_)
+  open import Data.Nat using (ℕ; zero; suc; _≤?_; _≥_)
 
-  module Dummy (n : ℕ) where
+  open import Algebra
+  import Data.Nat.Properties
+  module ℕ-CS = CommutativeSemiring Data.Nat.Properties.commutativeSemiring
+  import Data.Integer.Properties
+  module ℤ-CR = CommutativeRing Data.Integer.Properties.commutativeRing
+  open import Relation.Nullary.Decidable
+
+  module Dummy (n : ℕ) {≥2 : True (2 ≤? n)} where
+    open import Relation.Binary.PropositionalEquality as P using (_≡_; _≢_)
+
+    private
+      module Divisor-Props where
+        open import Data.Nat
+        open import Data.Empty
+        open import Relation.Binary
+        open import Relation.Nullary
+        open import Function
+
+        n≥2 : n ≥ 2
+        n≥2 = toWitness ≥2
+
+        fromWitnessFalse : ∀ {p} {P : Set p} {Q : Dec P} → ¬ P → False Q
+        fromWitnessFalse {Q = yes p} = flip _$_ p
+        fromWitnessFalse {Q = no ¬p} = const _
+
+        n≢0 : False (n ≟ 0)
+        n≢0 = fromWitnessFalse (≥2⇒≢0 n≥2)
+          where
+          open import Data.Nat.Properties
+
+          ≥2⇒≢0 : ∀ {k} → k ≥ 2 → k ≢ 0
+          ≥2⇒≢0 {.(suc k)} (s≤s {.1} {k} m≤n) = i+1+j≢i zero
+
+      open Divisor-Props
+
+      module Neg-Fin where
+        private
+          open import Data.Nat
+          open import Data.Fin hiding (_≤_; _+_)
+          open import Data.Fin.Props
+          open import Data.Nat.Properties
+          open import Function
+
+          toℕ-cancel : ∀ {k} → {i j : Fin k} → toℕ i ≡ toℕ j → i ≡ j
+          toℕ-cancel {i = zero} {j = zero} i′≡j′ = P.refl
+          toℕ-cancel {i = zero} {j = suc i} ()
+          toℕ-cancel {i = suc i} {j = zero} ()
+          toℕ-cancel {i = suc i} {j = suc j} i′≡j′ = P.cong suc (toℕ-cancel (cancel-+-left 1 i′≡j′))
+
+        reverse-neg : ∀ {k} → (i : Fin k) → toℕ (reverse i) ≡ k ∸ suc (toℕ i)
+        reverse-neg {zero} ()
+        reverse-neg {suc k} i = inject≤-lemma _ _ ⟨ P.trans ⟩ toℕ‿ℕ- k i
+          where
+          toℕ‿ℕ- : ∀ k i → toℕ (k ℕ- i) ≡ k ∸ toℕ i
+          toℕ‿ℕ- k zero = to-from k
+          toℕ‿ℕ- zero (suc ())
+          toℕ‿ℕ- (suc k) (suc i) = toℕ‿ℕ- k i
+
+        reverse-inv : ∀ {k} → (i : Fin k) → reverse (reverse i) ≡ i
+        reverse-inv {k} i = toℕ-cancel (reverse-neg _ ⟨ P.trans ⟩ eq)
+          where
+          open P.≡-Reasoning
+          open import Algebra
+
+          lem₁ : ∀ m n → (m + n) ∸ (m + n ∸ m) ≡ m
+          lem₁ m n =
+            begin
+              m + n ∸ (m + n ∸ m)
+            ≡⟨ P.cong (λ ξ → m + n ∸ (ξ ∸ m)) (ℕ-CS.+-comm m n) ⟩
+              m + n ∸ (n + m ∸ m)
+            ≡⟨ P.cong (λ ξ → m + n ∸ ξ) (m+n∸n≡m n m) ⟩
+              m + n ∸ n
+            ≡⟨ m+n∸n≡m m n ⟩
+              m
+            ∎
+
+          lem₂ : ∀ k → (i : Fin k) → k ∸ suc (k ∸ suc (toℕ i)) ≡ toℕ i
+          lem₂ zero ()
+          lem₂ (suc k) i =
+            begin
+              k ∸ (k ∸ toℕ i)
+            ≡⟨ P.cong (λ ξ → ξ ∸ (ξ ∸ toℕ i)) i+j≡k ⟩
+              (toℕ i + j) ∸ (toℕ i + j ∸ toℕ i)
+            ≡⟨ lem₁ (toℕ i) j ⟩
+              toℕ i
+            ∎
+            where
+            open import Data.Product
+
+            decompose-k : ∃ λ j → k ≡ toℕ i + j
+            decompose-k = k ∸ toℕ i , P.sym (m+n∸m≡n (prop-toℕ-≤ i))
+
+            j = proj₁ decompose-k
+            i+j≡k = proj₂ decompose-k
+
+          eq : k ∸ suc (toℕ (reverse i)) ≡ toℕ i
+          eq =
+            begin
+              k ∸ suc (toℕ (reverse i))
+            ≡⟨ P.cong (λ ξ → k ∸ suc ξ) (reverse-neg i) ⟩
+              k ∸ suc (k ∸ suc (toℕ i))
+            ≡⟨ lem₂ k i ⟩
+              toℕ i
+            ∎
+
+    open import Data.Integer hiding (suc)
     open import Data.Nat.Divisibility
     open import Function using (_∘_; _⟨_⟩_)
     import Level
@@ -49,6 +154,94 @@ private
 
     open import Algebra.FunctionProperties using (Op₁; Op₂)
     open Setoid Mod
+
+    open import Data.Fin using (Fin)
+    open import Data.Fin.Props using (reverse)
+    open import Data.Nat.DivMod
+
+    normalize : Carrier → Fin n
+    normalize (+ x) = (x mod n) {n≢0}
+    normalize -[1+ x ] = reverse ((x mod n) {n≢0})
+
+    abstract
+      open import Data.Fin using (toℕ)
+      open import Data.Nat renaming (_+_ to _ℕ+_; _*_ to _ℕ*_)
+
+      normalize-correct : ∀ x → x ∼ (+ (toℕ (normalize x)))
+      normalize-correct -[1+ x ] with (x divMod n) {n≢0}
+      normalize-correct -[1+ .(toℕ r ℕ+ q ℕ* n) ] | result q r = divides (suc q) eq′
+        where
+        x′ : ℕ
+        x′ = toℕ r ℕ+ q ℕ* n
+
+        open P.≡-Reasoning
+        open Data.Nat.Properties
+
+        lem : ∀ x y → - (x - y) ≡ y - x
+        lem -[1+ zero ] -[1+ zero ] = P.refl
+        lem -[1+ suc _ ] -[1+ zero ] = P.refl
+        lem (+ zero) -[1+ zero ] = P.refl
+        lem (+ suc x) -[1+ zero ] = P.cong -[1+_] (ℕ-CS.+-comm x _)
+        lem -[1+ zero ] -[1+ suc _ ] = P.refl
+        lem -[1+ suc x ] -[1+ suc y ] = lem -[1+ x ] -[1+ y ]
+        lem (+ zero) -[1+ suc y ] = P.refl
+        lem (+ suc x) -[1+ suc y ] = P.cong -[1+_] (ℕ-CS.+-comm x _)
+        lem -[1+ zero ] (+ zero) = P.refl
+        lem -[1+ zero ] (+ suc y) = P.cong +_ (ℕ-CS.+-comm (suc zero) _)
+        lem -[1+ suc x ] (+ zero) = P.refl
+        lem -[1+ suc x ] (+ suc y) = P.cong (+_ ∘ suc) (ℕ-CS.+-comm _ y)
+        lem (+ zero) (+ zero) = P.refl
+        lem (+ zero) (+ suc y) = P.cong (+_ ∘ suc) (ℕ-CS.+-comm _ y)
+        lem (+ suc x) (+ zero) = P.cong -[1+_] (proj₂ ℕ-CS.+-identity x)
+        lem (+ suc x) (+ suc y) = lem -[1+ y ] -[1+ x ]
+
+        eq′ : ∣ -[1+ x′ ] - (+ toℕ (reverse r))  ∣ ≡ suc q ℕ* n
+        eq′ =
+          begin
+            ∣ -[1+ x′ ] - (+ toℕ (reverse r)) ∣
+          ≡⟨ P.sym (abs-neg (-[1+ x′ ] + - (+ toℕ (reverse r)))) ⟩
+            ∣ - (-[1+ x′ ] - (+ toℕ (reverse r))) ∣
+          ≡⟨ P.cong ∣_∣ (lem -[1+ x′ ] (+ toℕ (reverse r))) ⟩
+            toℕ (reverse r) ℕ+ (suc x′)
+          ≡⟨ P.cong (λ ξ → ξ ℕ+ (suc x′)) (Neg-Fin.reverse-neg r) ⟩
+            (n ∸ suc (toℕ r)) ℕ+ (suc x′)
+          ≡⟨ P.cong (λ ξ → (n ∸ suc (toℕ r)) ℕ+ suc ξ) P.refl ⟩
+            (n ∸ suc (toℕ r)) ℕ+ (suc (toℕ r) ℕ+ q ℕ* n)
+          ≡⟨ P.sym (ℕ-CS.+-assoc (n ∸ suc (toℕ r)) (suc (toℕ r)) (q ℕ* n)) ⟩
+            (n ∸ suc (toℕ r) ℕ+ suc (toℕ r)) ℕ+ (q ℕ* n)
+          ≡⟨ P.cong (λ ξ → ξ ℕ+ q ℕ* n) (ℕ-CS.+-comm (n ∸ suc (toℕ r)) (suc (toℕ r))) ⟩
+            (suc (toℕ r) ℕ+ (n ∸ suc (toℕ r))) ℕ+ (q ℕ* n)
+          ≡⟨ P.cong (λ ξ → ξ ℕ+ q ℕ* n) (m+n∸m≡n r<n) ⟩
+            suc q ℕ* n
+          ∎
+          where
+          open import Data.Fin.Props
+
+          r<n : toℕ r < n
+          r<n = prop-toℕ-≤ (Data.Fin.suc r)
+
+      normalize-correct (+ x) with (x divMod n) {n≢0}
+      normalize-correct (+ .(toℕ r ℕ+ q ℕ* n)) | result q r = divides q eq
+        where
+        open P.≡-Reasoning
+
+        eq : ∣ + (toℕ r ℕ+ q ℕ* n) - (+ toℕ r) ∣ ≡ q ℕ* n
+        eq =
+          begin
+            ∣ + (toℕ r ℕ+ q ℕ* n) - (+ toℕ r) ∣
+          ≡⟨ P.refl ⟩
+            ∣ (+ toℕ r) + (+ (q ℕ* n)) - (+ toℕ r) ∣
+          ≡⟨ P.cong (λ ξ → ∣ ξ - + toℕ r ∣) (ℤ-CR.+-comm (+ toℕ r) (+ (q ℕ* n))) ⟩
+            ∣ (+ (q ℕ* n)) + (+ toℕ r) - (+ toℕ r) ∣
+          ≡⟨ P.cong ∣_∣ (ℤ-CR.+-assoc (+ (q ℕ* n)) (+ toℕ r) (- (+ toℕ r))) ⟩
+            ∣ (+ (q ℕ* n)) + ((+ toℕ r) - (+ toℕ r)) ∣
+          ≡⟨ P.cong (λ ξ → ∣ (+ (q ℕ* n)) + ξ ∣) (proj₂ ℤ-CR.-‿inverse (+ toℕ r)) ⟩
+            ∣ (+ (q ℕ* n)) + (+ 0) ∣
+          ≡⟨ P.cong ∣_∣ (proj₂ ℤ-CR.+-identity (+ (q ℕ* n))) ⟩
+            ∣ + (q ℕ* n) ∣
+          ≡⟨ P.refl ⟩
+            q ℕ* n
+          ∎
 
     plus : Op₂ Carrier
     plus = _+_

@@ -17,7 +17,7 @@ private
   module ℕ-Ord = StrictTotalOrder Nat.strictTotalOrder
 import Data.Integer.Properties as Integer
 private
-  module ℤ-CR = CommutativeRing Data.Integer.Properties.commutativeRing
+  module ℤ-CR = CommutativeRing Integer.commutativeRing
 
 open import Data.Product
 
@@ -269,53 +269,16 @@ abstract
   suc x +-*-+ zero = x +-*-+ zero
   suc x +-*-+ suc y = refl
 
-  open import Data.Nat.Coprimality hiding (sym)
-  open import Data.Nat.Primality
-  open import Data.Empty
-  open import Data.Fin using (Fin; toℕ; fromℕ≤; #_)
-  open import Data.Fin.Props
-
-  prime⇒coprime : ∀ n → Prime n → ∀ x → (suc x) < n → Coprime n (suc x)
-  prime⇒coprime 0 () _ _ _
-  prime⇒coprime 1 () _ _ _
-  prime⇒coprime (suc (suc n)) p _ _ {0} (divides q eq , _) = ⊥-elim (i+1+j≢i 0 contradiction)
-    where
-    contradiction : suc (suc n) ≡ 0
-    contradiction =
-      begin
-        suc (suc n)
-      ≡⟨ eq ⟩
-        q ℕ* 0
-      ≡⟨ proj₂ ℕ-CS.zero q ⟩
-        0
-      ∎
-  prime⇒coprime (suc (suc n)) p _ _ {1} _ = refl
-  prime⇒coprime (suc (suc n)) p x x+1<n+2 {suc (suc i)} (i+2∣n+2 , i+2∣x+1) = ⊥-elim (p (proj₁ fin) (proj₂ fin))
-    where
-    i+2≤x+1 : suc (suc i) ≤ suc x
-    i+2≤x+1 = ∣⇒≤ i+2∣x+1
-
-    i+2<n+2 : suc (suc i) < suc (suc n)
-    i+2<n+2 = s≤s i+2≤x+1 ⟨ trans ⟩ x+1<n+2
-      where
-      open DecTotalOrder Data.Nat.decTotalOrder using (trans)
-
-    i<n : i < n
-    i<n = (≤-pred ∘ ≤-pred) i+2<n+2
-
-    fin : ∃ λ (k : Fin n) → suc (suc (toℕ k)) ∣ suc (suc n)
-    fin = fromℕ≤ i<n , subst (λ ξ → ξ ∣ suc (suc n)) (sym (cong (suc ∘ suc) (toℕ-fromℕ≤ i<n))) i+2∣n+2
-
-
-  open import Data.Nat.GCD
-  open import Data.Nat.DivMod
-
   mod-suc : ∀ n x → suc (suc n) ∣ suc (x ℕ* (suc (suc n))) ℕ+ suc n
   mod-suc n x = divides (suc x) eq
     where
     open Nat.SemiringSolver
     eq : suc (x ℕ* suc (suc n)) ℕ+ suc n ≡ suc x ℕ* suc (suc n)
     eq = solve 2 (λ a b → con 1 :+ a :* (con 1 :+ b) :+ b := (con 1 :+ a) :* (con 1 :+ b)) refl x (suc n)
+
+  open import Data.Nat.GCD
+  open import Data.Nat.DivMod
+  open import Data.Nat.Coprimality hiding (sym)
 
   ∣-inv : ∀ n x → Coprime (suc (suc n)) x → ∃ λ y → suc (suc n) ∣ (y ℕ* x) ℕ+ (suc n)
   ∣-inv n x coprime with coprime-Bézout coprime
@@ -373,6 +336,8 @@ abstract
   ⊖-cancel : ∀ x y → x ℕ+ y ⊖ x ≡ + y
   ⊖-cancel zero y = refl
   ⊖-cancel (suc x) y = ⊖-cancel x y
+
+  open import Data.Empty
 
   ∣-abs-inv : ∀ n x → Coprime (suc (suc n)) ∣ x ∣ → ∃ λ y → suc (suc n) ∣ ∣ y * x - (+ 1) ∣
   ∣-abs-inv n (+ x) coprime with ∣-inv n x coprime

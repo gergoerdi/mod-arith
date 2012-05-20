@@ -9,8 +9,6 @@ private
 
   module Dummy (n : ℕ) {≥2 : True (2 ≤? n)} where
 
-    -- open Data.Mod n {≥2}
-
     open import Relation.Binary.PropositionalEquality as P using (_≡_; _≢_)
 
     private
@@ -326,26 +324,44 @@ private
           normalised-ring : R.rawRing -Raw-AlmostCommutative⟶ R₀
           normalised-ring = record
             { ⟦_⟧ = normalise
-            ; +-homo = {!!} -- λ x y → normalise-correct x ⟨ +-cong ⟩ normalise-correct y
-            ; *-homo = {!!} -- λ x y → normalise-correct x ⟨ *-cong ⟩ normalise-correct y
+            ; +-homo = λ x y →
+              begin
+                normalise (x + y)
+              ≈⟨ normalise-correct (x + y) ⟩
+                x + y
+              ≈⟨ normalise-correct-sym x ⟨ +-cong {x} {normalise x} {y} {normalise y} ⟩ normalise-correct-sym y ⟩
+                normalise x + normalise y
+              ∎
+            ; *-homo = λ x y →
+              begin
+                normalise (x * y)
+              ≈⟨ normalise-correct (x * y) ⟩
+                x * y
+              ≈⟨ normalise-correct-sym x ⟨ *-cong {x} {normalise x} {y} {normalise y} ⟩ normalise-correct-sym y ⟩
+                normalise x * normalise y
+              ∎
             ; -‿homo = λ x →
               begin
                 normalise (- x)
               ≈⟨ normalise-correct (- x) ⟩
                 - x
-              ≈⟨ -‿cong {x} (normalise-correct-sym x) ⟩
+              ≈⟨ -‿cong {x} {normalise x} (normalise-correct-sym x) ⟩
                 - (normalise x)
               ∎
             ; 0-homo = normalise-correct [ 0 ]
             ; 1-homo = normalise-correct [ 1 ]
             }
             where
-            module S = Setoid Mod
+            open import Function using (_⟨_⟩_)
             import Relation.Binary.EqReasoning
             open Relation.Binary.EqReasoning Mod
             module CR = CommutativeRing commutativeRing
-            open CR hiding (-_) -- TODO
+            open CR using (+-cong; *-cong; -‿cong)
 
         import Algebra.RingSolver
         module Solver = Algebra.RingSolver R.rawRing R₀ normalised-ring
 
+    open Normalise public
+    open Structure public
+
+open Dummy public
